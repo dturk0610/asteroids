@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script type="text/javascript" src="../Common/webgl-utils.js"></script>
+        <script type="text/javascript" src="../Common/initShaders.js"></script>
+        <script type="text/javascript" src="../Common/MV.js"></script>
+        <script type="text/javascript" src="asteroids.js"></script>
+
+        <script id="vertex-shader" type="x-shader/x-vertex">
+            attribute vec4 myPosition;
+
+            void main(){
+                gl_PointSize = 1.0;
+                gl_Position = myPosition;
+            }
+        </script>
+
+        <script id="frag-blue" type="x-shader/x-fragment">
+            void main(){
+                gl_FragColor = vec4( 0, 0, 1.0, 1.0 );
+            }
+        </script>
+
+        <script id="frag-orange" type="x-shader/x-fragment">
+            void main(){
+                gl_FragColor = vec4( 255.0/255.0, 145.0/255.0, 0.0/255.0, 1.0 );
+            }
+        </script>
+    
+    </head>
+
+    <body onload="init()">
+        <canvas id="gl-canvas" width="2048" height="2048"></canvas>
+    </body>
+</html>

@@ -24,7 +24,7 @@
             } varAsteroid;
 
             layout (std140, binding = 0) uniform AsteroidBlock {
-                Asteroid astInstances [25];
+                Asteroid astInstances [50];
             };
 
             attribute vec4 myPosition;
@@ -39,6 +39,10 @@
                 currAsteroid.position += velocity*timeDelta;
                 for (int i=0; i<12; i++){
                     currAsteroid.points[i] += velocity*timeDelta;                    
+                }
+
+                if ( ((time*100) % resetTimer)/100 == 0 ){
+                    
                 }
 
             }

@@ -8,6 +8,9 @@ function init(){
     gl=WebGLUtils.setupWebGL(canvas);
     if (!gl) { alert( "WebGL is not available" ); }
 
+    canvas.width = window.innerWidth - 32;
+    canvas.height = window.innerHeight - 32;
+
     h = parseFloat(canvas.height);
     invh = 1.0/h;
     w = parseFloat(canvas.width);
@@ -21,7 +24,7 @@ function init(){
 function render(){
 
     gl.viewport(0, 0, w, h );
-    gl.clearColor( 115.0/255.0, 0.0/255.0, 255.0/255.0, 1.0 );
+    gl.clearColor( 0, 0, 0, 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT );
 
     var point1 = vec2(0,0);
@@ -58,11 +61,11 @@ function render(){
     // gl.drawArrays( gl.TRIANGLE_FAN, 3, 4 );
 
 // for (inititializer; condition; increment){ ... }
-    for (var i = 0; i < 128; i++){
-        for (var j = 0; j < 128; j++){
-            drawCirc(4, vec2(16*i + 8, 16*j + 8));
-        }
-    }
+    // for (var i = 0; i < 128; i++){
+    //     for (var j = 0; j < 128; j++){
+    //         drawCirc(4, vec2(16*i + 8, 16*j + 8));
+    //     }
+    // }
 
 }   
 

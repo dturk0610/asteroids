@@ -2,14 +2,21 @@ var gl;
 var invh, h;
 var invw, w;
 
+// struct Asteroid{
+//     vec2[12] points;
+//     vec2 position;
+//     vec2 velocity;
+//     float area;
+// }
+
 function init(){
 
-    var canvas=document.getElementById("gl-canvas");
+    var canvas=document.getElementById("asteroids-canvas");
     gl=WebGLUtils.setupWebGL(canvas);
     if (!gl) { alert( "WebGL is not available" ); }
 
-    canvas.width = window.innerWidth - 32;
-    canvas.height = window.innerHeight - 32;
+    //canvas.width = window.innerWidth - 32;
+    //canvas.height = window.innerHeight - 32;
 
     h = parseFloat(canvas.height);
     invh = 1.0/h;

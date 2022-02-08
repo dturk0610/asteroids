@@ -1,10 +1,12 @@
 var gl;
 var invh, h;
 var invw, w;
+var pastTime = 0;
+var myShaderProgram;
+var numOfAsteroirds = 30;
 
-
+var asteroidBuffers = [];
 function init(){
-
     var canvas=document.getElementById("asteroids-canvas");
     gl=WebGLUtils.setupWebGL(canvas);
     if (!gl) { alert( "WebGL is not available" ); }
@@ -67,39 +69,60 @@ function Asteroid(points, position, velocity, area){
 //     float area;
 // }
 
-function setup(){
+function setup() {
+    for (var asteroidAmount = 0; asteroidAmount < numOfAsteroirds; asteroidAmount++) {
+        var center = vec2(Math.random() * w, Math.random() * h);
+        var div = 12;
+        var stepAmount = 2 * Math.PI / div;
+        var points = [];
+        for (var theta = 0; theta < 2 * Math.PI; theta += stepAmount) {
+            var rad = (Math.random() * 15.0) + 10.0;
+            var x = rad * Math.cos(theta) + center[0];
+            var y = rad * Math.sin(theta) + center[1];
+            points.push(convertCanvasPosToView(x, y));
+        }
 
-    var center = vec2(Math.random()*w, Math.random()*h);
-    var div = 12;
-    var stepAmount = 2*Math.PI/div;
-    var points = [];
-    for ( var theta = 0; theta < 2*Math.PI; theta += stepAmount ){
-        var rad = Math.random() * 20;
-        var x = rad*Math.cos( theta ) + center[0];
-        var y = rad*Math.sin( theta ) + center[1];
-        points.push( convertCanvasPosToView(x,y) );
+        var speed = 1;
+        var vel = vec4(Math.random() * 2*speed - speed, Math.random() * 2*speed - speed, 0, 1);
+        vel = vec4(Math.abs(vel[0]), 0, 0, 1);
+
+        // Calculate area, this will be used hopefulyl for energy conversion so that
+        // smaller asteroids broken off from larger ones will move faster by some amount
+        var area = 0;
+        for (var i = 1; i < 12; i++) {
+            var currPt = points[i];
+            var prevPt = points[i - 1];
+            var side1 = vec3(prevPt[0] - center[0], prevPt[1] - center[1], 0);
+            var side2 = vec3(currPt[0] - center[0], currPt[1] - center[1], 0);
+            var crossProd = cross(side1, side2);
+            area += (mag(crossProd)) * .5;
+        }
+
+        var firstAsteroid = new Asteroid(points, center, vel, area);
+        //console.log("Test: " + firstAsteroid.toString());
+
+
+
+        var roidBuffer = gl.createBuffer();
+        asteroidBuffers.push(roidBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, roidBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+
+        myShaderProgram = initShaders(gl, "vertex-shader", "frag-blue");
+        gl.useProgram(myShaderProgram);
+
+        var myPos = gl.getAttribLocation(myShaderProgram, "myPosition");
+        gl.enableVertexAttribArray(myPos);
+        gl.vertexAttribPointer(myPos, 2, gl.FLOAT, false, 0, 0);
+
+
+        var velUniform = gl.getUniformLocation( myShaderProgram, "velocity" )
+        gl.uniform4fv(velUniform, vel)
+
+        gl.drawArrays( gl.LINE_LOOP, 0, points.length );
     }
 
-    var vel = vec2(Math.random()*8 - 4, Math.random()*8 - 4);
-
-    // Calculate area, this will be used hopefulyl for energy conversion so that
-    // smaller asteroids broken off from larger ones will move faster by some amount
-    var area = 0;
-    for (var i = 1; i < 12; i++){
-        var currPt = points[i];
-        var prevPt = points[i - 1];
-        var side1 = vec3(prevPt[0] - center[0], prevPt[1] - center[1], 0);
-        var side2 = vec3(currPt[0] - center[0], currPt[1] - center[1], 0);
-        var crossProd = cross(side1, side2);
-        area += (mag(crossProd))*.5;
-    }
-
-    var firstAsteroid = new Asteroid(points, center, vel, area);
-    console.log("Test: " + firstAsteroid.toString());
 }
-
-
-
 /* Visual for cross product help
         |  i   j   k  |
     v1z | v1x v1y v1z | v1x

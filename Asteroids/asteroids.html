@@ -8,43 +8,12 @@
 
         <script id="vertex-shader" type="x-shader/x-vertex">
             attribute vec4 myPosition;
+            uniform vec4 velocity;
+            uniform float timeDelta;
 
             void main(){
                 gl_PointSize = 1.0;
                 gl_Position = myPosition;
-            }
-        </script>
-        <script id="asteroids-shader" type="x-shader/x-vertex">
-
-            struct Asteroid{
-                vec2[12] points;
-                vec2 position;
-                vec2 velocity;
-                float area;
-            } varAsteroid;
-
-            layout (std140, binding = 0) uniform AsteroidBlock {
-                Asteroid astInstances [50];
-            };
-
-            attribute vec4 myPosition;
-            uniform float timeDelta;
-            uniform float time;
-            uniform float resetTimer;
-
-            void main(){
-                
-                Asteroid currAsteroid = astInstances[gl_InstanceID];
-
-                currAsteroid.position += velocity*timeDelta;
-                for (int i=0; i<12; i++){
-                    currAsteroid.points[i] += velocity*timeDelta;                    
-                }
-
-                if ( ((time*100) % resetTimer)/100 == 0 ){
-                    
-                }
-
             }
         </script>
 

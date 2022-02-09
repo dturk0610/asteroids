@@ -75,13 +75,15 @@ function Asteroid(points, numPoints, position, velocity, area){
 // }
 
 function setup() {
+    var radMult = 20;
+    var radDiff = 5;
     for (var asteroidAmount = 0; asteroidAmount < numOfAsteroirds; asteroidAmount++) {
         var center = vec2(Math.random() * w, Math.random() * h);
         var div = 12;
         var stepAmount = 2 * Math.PI / div;
         var points = [];
         for (var theta = 0; theta < 2 * Math.PI; theta += stepAmount) {
-            var rad = (Math.random() * 15.0) + 10.0;
+            var rad = (Math.random() * radMult) + (radMult - radDiff);
             var x = rad * Math.cos(theta);
             var y = rad * Math.sin(theta);
             points.push(vec2(x, y));

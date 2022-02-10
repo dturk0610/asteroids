@@ -83,7 +83,6 @@ function setupGL(){
     gl.clear( gl.COLOR_BUFFER_BIT );
 
     asteroidShaderProgram = initShaders( gl, "vertex-shader", "frag-asteroid" );
-    gl.useProgram( asteroidShaderProgram );
 
 }
 
@@ -105,16 +104,19 @@ function setupAsteroids() {
     var radMult = 40;
     var radDiff = 5;
 
-    var numOfAsteroirds = 30;
+    var numOfAsteroids = 30;
     var divsForAsteroids = 12;
+    
+    var speed = 90;
 
     // Uses the above argument to generate that number of asteroids
     // to start with. This uses a lot of Math.random in order to ensure
     // a fun always-changing experience for the player. The center, or
     // position the asteroid is on the canvas is random in both directions,
     // same with the velocity. 
-    for (var asteroidAmount = 0; asteroidAmount < numOfAsteroirds; asteroidAmount++) {
+    for (var asteroidAmount = 0; asteroidAmount < numOfAsteroids; asteroidAmount++) {
         var center = vec2( Math.random() * w, Math.random() * h );
+
         var stepAmount = 2 * Math.PI / divsForAsteroids;
         var points = [];
         for (var theta = 0; theta < 2 * Math.PI; theta += stepAmount) {
@@ -127,7 +129,6 @@ function setupAsteroids() {
         // This speed value was trial-and-error arbitrarily set. There
         // was nothing special about this speed other than it looked okay
         // during initial testing.
-        var speed = 90;
         var vel = vec2( Math.random() * 2.0*speed - speed, Math.random() * 2.0*speed - speed );
 
         // Calculate area, this will be used hopefully for energy conversion so that
@@ -142,7 +143,7 @@ function setupAsteroids() {
             area += mag( crossProd ) * .5;
         }
 
-        var currRoid = new Asteroid( points, points.length, center, vel, area );
+        var currRoid = new Asteroid( points, divsForAsteroids, center, vel, area );
         roids.push( currRoid );
         // console.log(`currRoid: ${currRoid}`);
     }
@@ -230,7 +231,6 @@ function updateAsteroids( now ){
 
         if ((currRoid.position[1] > h) && dir[1] > 0){ currRoid.position[1] -= h; }
         if ((currRoid.position[1] < 0) && dir[1] < 0){ currRoid.position[1] += h; }
-
         /*
         // Assume to be true, but then change to false when one is in view.
         var allPointsOutOfView = true;
@@ -238,14 +238,15 @@ function updateAsteroids( now ){
         var dirFlagAdder = vec2(0,0);
         for (var j = 0; j < currRoid.points.length; j++){
             var currPoint = currRoid.points[j];
+            var offScreen = false;
             // If the point's x is out of range and the asteroid is moving
             // in a positive maner, 
-            if ((currPoint[0] > w) && dir[0] > 0){ needEdgeRoid = true; dirFlagAdder[0] = -w; }
-            if ((currPoint[0] < 0) && dir[0] < 0){ needEdgeRoid = true; dirFlagAdder[0] = w; }
+            if ((currPoint[0] > w) && dir[0] > 0){ needEdgeRoid = true; dirFlagAdder[0] = -w; offScreen = true; }
+            if ((currPoint[0] < 0) && dir[0] < 0){ needEdgeRoid = true; dirFlagAdder[0] = w;  offScreen = true; }
 
-            if ((currPoint[1] > h) && dir[1] > 0){ needEdgeRoid = true; dirFlagAdder[1] = -h; }
-            if ((currPoint[1] < 0) && dir[1] < 0){ needEdgeRoid = true; dirFlagAdder[1] = h; }
-            allPointsOutOfView == false;
+            if ((currPoint[1] > h) && dir[1] > 0){ needEdgeRoid = true; dirFlagAdder[1] = -h; offScreen = true; }
+            if ((currPoint[1] < 0) && dir[1] < 0){ needEdgeRoid = true; dirFlagAdder[1] = h; offScreen = true; }
+            allPointsOutOfView &= offScreen;
         }
         if (needEdgeRoid){
             var alreadExists = false;
@@ -258,6 +259,8 @@ function updateAsteroids( now ){
             if (!alreadExists){ 
                 tempRoid.position[0] += dirFlagAdder[0];
                 tempRoid.position[1] += dirFlagAdder[1]; 
+                //console.log("tempRoid: " + tempRoid.position); 
+                //console.log("currRoid: " + currRoid.position);
                 edgeRoids.push(tempRoid); 
             }
 
@@ -265,8 +268,6 @@ function updateAsteroids( now ){
             //console.log("I hope this worked");
         }
         */
-
-
     }
     roids.sort( compareAsteroids );
 
@@ -337,6 +338,7 @@ function drawAsteroids(){
 
     // Clears our buffer bit and then sets up our roid buffer
     gl.bindBuffer( gl.ARRAY_BUFFER, roidBuffer );
+    gl.useProgram( asteroidShaderProgram );
 
     // Sets up our shaders
     var myPos = gl.getAttribLocation( asteroidShaderProgram, "myPosition" );
@@ -386,6 +388,7 @@ function drawEdgeAsteroids(){
 
     // Clears our buffer bit and then sets up our roid buffer.
     gl.bindBuffer( gl.ARRAY_BUFFER, roidBuffer );
+    gl.useProgram( asteroidShaderProgram );
 
     // Sets up our shaders
     var myPos = gl.getAttribLocation( asteroidShaderProgram, "myPosition" );
@@ -509,7 +512,6 @@ function drawCirc( rad, center ){
 }
 
 // #endregion
-
 
 // isInside function reference
 // https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html

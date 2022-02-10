@@ -17,64 +17,50 @@ function init(){
     //canvas.width = window.innerWidth - 32;
     //canvas.height = window.innerHeight - 32;
 
-    h = parseFloat(canvas.height);
-    invh = 1.0/h;
-    w = parseFloat(canvas.width);
-    invw = 1.0/w;
+    // This small segment of code is dedicated to getting the height and
+    // width of the canvas and then calculating their inverse. This is an
+    // important technique used to same time when calculating a pixel
+    // position in the viewport
+    h = parseFloat(canvas.height); invh = 1.0/h;
+    w = parseFloat(canvas.width); invw = 1.0/w;
 
-    render();
-    setup();
-    drawAsteroids();
+    // This quick and dirty implementation of a clicking event
+    // Is being used to test the isInside function that the 
+    // asteroids objects have to determine if a point is inside
+    // of them. The hope is to use this function to have easy
+    // collision detection with the shots from them player
+    canvas.addEventListener("mousedown", function(e)
+    { tryClickAsteroid(canvas, e); }); 
+
+    // Then we call the setup functions which will just prepare GL and our
+    // asteroids. Eventually the player setup code should be called here
+    // or at least in a similar manner.
+    setupGL();
+    setupAsteroids();
+
     window.requestAnimationFrame(animate);
 }
 
-/* sample object
-function Shape(x, y) {
-    var that= this;
-
-    this.x= x;
-    this.y= y;
-
-    this.toString= function() {
-        return 'Shape at '+that.x+', '+that.y;
-    };
-}
-*/
-
-function Asteroid(points, numPoints, position, velocity, area){
-    var that = this;
-    this.points = points;
-    this.numPoints = numPoints;
-    this.position = position;
-    this.velocity = velocity;
-    this.area = area;
-
-
-    //Inorder to format strings like this, use a "backtick" `````  < these versus '''' < those, or """" < that
-    that.toString = function(){
-        var retStr = "Points: [ ";
-        for (var i = 0; i < this.numPoints; i++){
-            retStr += `(${points[i][0]}, ${points[i][1]})`;
-            if (i != 11){
-                retStr += ', ';
-            }
+function tryClickAsteroid(canvas, event) {
+    let rect = canvas.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = rect.height - (event.clientY - rect.top);
+    for (var i = 0; i < roids.length; i++){
+        if (roids[i].isInside(vec2(x,y))){
+            roids[i].clicked = true;
+            console.log(`clicked asteroid: ${roids[i]}`);
         }
-        retStr += ' ]\n';
-        retStr += `Position: (${position[0]}, ${position[1]})\n`;
-        retStr += `Velocity: (${velocity[0]}, ${velocity[1]})\n`;
-        retStr += `Area: ${area}\n`;
-        return retStr;
-    };
+    } 
+    //console.log(`x: ${x}, y: ${y}`);
 }
 
-// struct Asteroid{
-//     vec2[12] points;
-//     vec2 position;
-//     vec2 velocity;
-//     float area;
-// }
+function setupGL(){
+    gl.viewport(0, 0, w, h );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT );
+}
 
-function setup() {
+function setupAsteroids() {
     var radMult = 20;
     var radDiff = 5;
     for (var asteroidAmount = 0; asteroidAmount < numOfAsteroirds; asteroidAmount++) {
@@ -106,7 +92,6 @@ function setup() {
 
         var currRoid = new Asteroid(points, points.length, center, vel, area);
         roids.push(currRoid);
-        //var firstAsteroid = new Asteroid(points, center, vel, area);
         //console.log("Test: " + firstAsteroid.toString());
     }
 
@@ -120,7 +105,7 @@ function drawAsteroids(){
     gl.clear( gl.COLOR_BUFFER_BIT );
     gl.bindBuffer(gl.ARRAY_BUFFER, roidBuffer);
 
-    var myShaderProgram = initShaders(gl, "vertex-shader", "frag-blue");
+    var myShaderProgram = initShaders(gl, "vertex-shader", "frag-asteroid");
     gl.useProgram(myShaderProgram);
 
     var myPos = gl.getAttribLocation(myShaderProgram, "myPosition");
@@ -142,8 +127,18 @@ function drawAsteroids(){
         // var velUniform = gl.getUniformLocation( myShaderProgram, "velocity" )
         // gl.uniform4fv(velUniform, vel)
 
+        var clickUniform = gl.getUniformLocation( myShaderProgram, "clicked" );
+        gl.uniform1i(clickUniform, currRoid.clicked);
+
         gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
     }
+}
+
+function compareAsteroids(A1, A2){
+    if (A1.position[0] < A2.position[0]) return -1;
+    if (A1.position[0] > A2.position[0]) return 1;
+    return 0;
+
 }
 
 function updateAsteroids(now){
@@ -161,7 +156,6 @@ function updateAsteroids(now){
         currRoid.position[1] += currVel[1]*timeDelta;
 
         var velMag = mag(vec3(currVel[0], currVel[1], 0));
-        //console.log(dir);
         var dir = vec2(currVel[0]/velMag, currVel[1]/velMag);
 
         if ((currRoid.position[0] > w) && dir[0] > 0){ currRoid.position[0] -= w + padding + 10; }
@@ -169,51 +163,8 @@ function updateAsteroids(now){
 
         if ((currRoid.position[1] > h) && dir[1] > 0){ currRoid.position[1] -= h + padding + 10; }
         if ((currRoid.position[1] < 0) && dir[1] < 0){ currRoid.position[1] += h - padding + 10; }
-
-        // if (currRoid.position[0] < w && currRoid.position[0] > 0) areAllPointsOutOfView = false;
-        // if (currRoid.position[1] < h && currRoid.position[1] > 0) areAllPointsOutOfView = false; 
-        
-        // for (var j = 0; j < points.length; j++){
-        //     var currPoint = points[j];
-        //     // currPoint[0] = currPoint[0] + currVel[0]*timeDelta;
-        //     // currPoint[1] = currPoint[1] + currVel[1]*timeDelta;
-
-        //     points[j] = currPoint;
-            
-        //     if (points[j][0] > w){ points[j][0] -= w + 1; }
-        //     if (points[j][0] < 0){ points[j][0] += w - 1; }
-
-        //     if (points[j][1] > h){ points[j][1] -= h + 1; }
-        //     if (points[j][1] < 0){ points[j][1] += h - 1; }
-
-        //     // if (points[j][0] < w && points[j][0] > 0) areAllPointsOutOfView = false;
-        //     // else anyPointOutofView = true;
-        //     // if (points[j][1] < h && points[j][1] > 0) areAllPointsOutOfView = false; 
-        //     // else anyPointOutofView = true;
-        // }
-
-        // if (areAllPointsOutOfView){ roidsToDelete.push(currRoid); continue; }
-        // if (!anyPointOutofView) { continue; }
-        // else{
-        //     //currRoid.velocity[0] = -currRoid.velocity[0];
-        //     // var target = new Asteroid();
-        //     // var tempAsteroid = Object.assign(target, currRoid);
-        //     // tempAsteroid.velocity
-        //     // var needNewRoid = true;
-        //     // for (var j = 0; j < currCount; j++){
-        //     //     var tempPos = tempAsteroid.position;
-        //     //     var testPos = roids[j];
-        //     //     if (tempPos[0] == testPos[0] && tempPos[1] == testPos[1]){
-        //     //         needNewRoid = false;
-        //     //         break;
-        //     //     }
-        //     // }
-        //     // if (!needNewRoid) continue;
-
-        //     // roids.push(tempAsteroid);
-        // }
-
     }
+    roids.sort(compareAsteroids);
 
 }
 
@@ -245,53 +196,6 @@ function dot (v1, v2){
 }
 
 
-function render(){
-
-    gl.viewport(0, 0, w, h );
-    gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT );
-
-//     var point1 = vec2(0,0);
-//     var point2 = vec2(0,1);
-//     var point3 = vec2(1,0);
-
-//     var point4 = vec2(0,0);
-//     var point5 = vec2(0,-1);
-//     var point6 = vec2(-1,-1);
-//     var point7 = vec2(-1,0);
-
-//     var trinangleArr = [];
-//     trinangleArr.push(point1);
-//     trinangleArr.push(point2);
-//     trinangleArr.push(point3);
-//     //pushing square points into array
-//     trinangleArr.push(point4);
-//     trinangleArr.push(point5);
-//     trinangleArr.push(point6);
-//     trinangleArr.push(point7);
-
-//     var triBufferID = gl.createBuffer();
-//     gl.bindBuffer( gl.ARRAY_BUFFER, triBufferID);
-//     gl.bufferData( gl.ARRAY_BUFFER, flatten(trinangleArr), gl.STATIC_DRAW );
-
-//     var myShaderProgram = initShaders( gl, "vertex-shader", "frag-blue" );
-//     gl.useProgram(myShaderProgram);
-
-//     var myPos = gl.getAttribLocation( myShaderProgram, "myPosition");
-//     gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
-//     gl.enableVertexAttribArray( myPos );
-
-//     // gl.drawArrays( gl.TRIANGLES, 0, 3 );
-//     // gl.drawArrays( gl.TRIANGLE_FAN, 3, 4 );
-
-// // for (inititializer; condition; increment){ ... }
-//     // for (var i = 0; i < 128; i++){
-//     //     for (var j = 0; j < 128; j++){
-//     //         drawCirc(4, vec2(16*i + 8, 16*j + 8));
-//     //     }
-//     // }
-
-}   
 
 function convertCanvasPosToView( x, y ){
    return vec2((x*invw*2) - 1, (y*invh*2) - 1);

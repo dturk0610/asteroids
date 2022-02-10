@@ -60,3 +60,9 @@ function Asteroid(points, numPoints, position, velocity, area) {
         return retStr;
     };
 }
+
+function compareAsteroids(A1, A2){
+    if (A1.position[0] < A2.position[0]) return -1;
+    if (A1.position[0] > A2.position[0]) return 1;
+    return 0;
+}

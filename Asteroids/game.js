@@ -4,8 +4,8 @@ var invw, w;
 
 var pastTime = 0;
 
-var roidBuffer;
-var roids = [];
+var roidBuffer, edgeRoidBuffer;
+var roids = [], edgeRoids = [];
 var roidsToDelete = [];
 var timeDelta = 0;
 
@@ -102,7 +102,7 @@ function setupAsteroids() {
     // rand function, and the radDiff helps us specify
     // a nice ring of where the radii can be. Much like
     // the width of a disk.
-    var radMult = 20;
+    var radMult = 40;
     var radDiff = 5;
 
     var numOfAsteroirds = 30;
@@ -159,10 +159,14 @@ function setupAsteroids() {
 // request animation frame is called again
 function animate( now ){
     now *= .001;
+    
+    gl.clear( gl.COLOR_BUFFER_BIT );
 
     // Update all asteroid position, then render them
     updateAsteroids( now );
     drawAsteroids();
+    //updateEdgeAsteroids( now );
+    //drawEdgeAsteroids();
 
     // Below here will ideally be other update functions
     // and render functions
@@ -226,8 +230,93 @@ function updateAsteroids( now ){
 
         if ((currRoid.position[1] > h) && dir[1] > 0){ currRoid.position[1] -= h; }
         if ((currRoid.position[1] < 0) && dir[1] < 0){ currRoid.position[1] += h; }
+
+        /*
+        // Assume to be true, but then change to false when one is in view.
+        var allPointsOutOfView = true;
+        var needEdgeRoid = false;
+        var dirFlagAdder = vec2(0,0);
+        for (var j = 0; j < currRoid.points.length; j++){
+            var currPoint = currRoid.points[j];
+            // If the point's x is out of range and the asteroid is moving
+            // in a positive maner, 
+            if ((currPoint[0] > w) && dir[0] > 0){ needEdgeRoid = true; dirFlagAdder[0] = -w; }
+            if ((currPoint[0] < 0) && dir[0] < 0){ needEdgeRoid = true; dirFlagAdder[0] = w; }
+
+            if ((currPoint[1] > h) && dir[1] > 0){ needEdgeRoid = true; dirFlagAdder[1] = -h; }
+            if ((currPoint[1] < 0) && dir[1] < 0){ needEdgeRoid = true; dirFlagAdder[1] = h; }
+            allPointsOutOfView == false;
+        }
+        if (needEdgeRoid){
+            var alreadExists = false;
+            var tempRoid = new Asteroid();
+            tempRoid = Object.assign(tempRoid, currRoid);
+            edgeRoids.forEach((edgeRoid) => {
+                if (isEqual(edgeRoid, tempRoid)){ alreadExists = true; }
+            });
+
+            if (!alreadExists){ 
+                tempRoid.position[0] += dirFlagAdder[0];
+                tempRoid.position[1] += dirFlagAdder[1]; 
+                edgeRoids.push(tempRoid); 
+            }
+
+            //console.log(isEqual(tempRoid, currRoid));
+            //console.log("I hope this worked");
+        }
+        */
+
+
     }
     roids.sort( compareAsteroids );
+
+}
+
+function updateEdgeAsteroids( now ){
+    var timeDelta = now - pastTime;
+
+    // Stoes the value of the length before any update are
+    // made, just in case there are additions to the array
+    // as the update happens. It should be noted that we
+    // should have separate arrays setup specifically
+    // dedicated to deleting asteroids as we blow them up
+    // or for any other reason.
+    var currCount = edgeRoids.length;
+    var indexesToDelete = [];
+
+    // Loops through all asteroids and updates their
+    // positions. It then uses vector math and some logic
+    // to move the asteroid to the oposite side of the
+    // screen to give the effect of continuous movement.
+    for (var i = 0; i < currCount; i++){
+
+        // Gets the current asteroid just for ease of use,
+        // same thing with velocity. Uses these to move
+        // the current position of this asteroid.
+        var currRoid = edgeRoids[i];
+        var currVel = currRoid.velocity;
+        currRoid.position[0] += currVel[0]*timeDelta;
+        currRoid.position[1] += currVel[1]*timeDelta;
+
+        // This part of the code leverages knowledge of 
+        // vector math as well as understanding the desired
+        // movement effect of the asteroids in order to get
+        // them to scroll endlessly across the screen.
+        var velMag = mag( vec3( currVel[0], currVel[1], 0 ) );
+        var dir = vec2( currVel[0]/velMag, currVel[1]/velMag );
+        var needToDelete = false;
+        if ((currRoid.position[0] > 0) && dir[0] > 0){ needToDelete = true; }
+        if ((currRoid.position[0] < w) && dir[0] < 0){ needToDelete = true; }
+
+        if ((currRoid.position[1] > 0) && dir[1] > 0){ needToDelete = true; }
+        if ((currRoid.position[1] < h) && dir[1] < 0){ needToDelete = true; }
+
+        if (needToDelete) { indexesToDelete.push(i); }
+    }
+
+    for (var i = 0; i < indexesToDelete.length; i++){
+        edgeRoids.splice(indexesToDelete[i] - i, 1);
+    }
 
 }
 
@@ -247,7 +336,6 @@ function drawAsteroids(){
         roidBuffer = gl.createBuffer();
 
     // Clears our buffer bit and then sets up our roid buffer
-    gl.clear( gl.COLOR_BUFFER_BIT );
     gl.bindBuffer( gl.ARRAY_BUFFER, roidBuffer );
 
     // Sets up our shaders
@@ -289,9 +377,59 @@ function drawAsteroids(){
     }
 }
 
+function drawEdgeAsteroids(){
+
+    // Checks if our roid buffer id is null, if is, we 
+    // generate a buffer for the gpu for it
+    if (!edgeRoidBuffer)
+        edgeRoidBuffer = gl.createBuffer();
+
+    // Clears our buffer bit and then sets up our roid buffer.
+    gl.bindBuffer( gl.ARRAY_BUFFER, roidBuffer );
+
+    // Sets up our shaders
+    var myPos = gl.getAttribLocation( asteroidShaderProgram, "myPosition" );
+    gl.enableVertexAttribArray( myPos );
+    gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
+
+    // Loops through all asteroids, uses the point positions
+    // and the asteroids positions and the convertCanvasPosToView
+    // in order to calculate the points' positions in the viewport.
+    // All of these converted positions are saved to a pointsToRender
+    // array and then rendered with the gl.LINE_LOOP to get the generic
+    // Atari asteroids look.
+    for (var i = 0; i < edgeRoids.length; i++){
+
+        // Only points saved to this array will actually be rendered.
+        var pointsToRender = [];
+        var currRoid = edgeRoids[i];
+        var center = currRoid.position;
+
+        // Loops through each point making up the current asteroid and
+        // converts the canvas space position to the viewport space
+        // position.
+        for (var j = 0; j < currRoid.points.length; j++){
+            var point = currRoid.points[j];
+            pointsToRender.push( convertCanvasPosToView( point[0] + center[0], point[1] + center[1] ) );
+        }
+
+        gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
+
+        // Special uniform to surprise the user when they click on some
+        // asteroids. This whole idea with the click and uniform on the
+        // fragment shader and be used to our advantage in order to have
+        // cool effects on asteroids that are hit.
+        var clickUniform = gl.getUniformLocation( asteroidShaderProgram, "clicked" );
+        gl.uniform1i( clickUniform, currRoid.clicked );
+
+        gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
+    }
+}
 // #endregion
 
 // #region USEFUL FUNCTIONS REGION
+
+const isEqual = (...objects) => objects.every(obj => JSON.stringify(obj) === JSON.stringify(objects[0]));
 
 // A very useful vector math function that returns the
 // cross product of the two input vectors. They are all

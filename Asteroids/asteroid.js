@@ -11,7 +11,7 @@ function Shape(x, y) {
     };
 }*/
 
-function Asteroid(points, numPoints, position, velocity, area) {
+function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity = vec2( 0, 0 ), area = 0 ) {
     var that = this;
     this.points = points;
     this.numPoints = numPoints;

@@ -338,6 +338,7 @@ function changeDirection(dir, change){
 function updateEdgeAsteroids( now ){
     var timeDelta = now - pastTime;
 
+    
     // Stoes the value of the length before any update are
     // made, just in case there are additions to the array
     // as the update happens. It should be noted that we

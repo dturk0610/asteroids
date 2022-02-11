@@ -465,6 +465,31 @@ function dot ( v1, v2 ){
     return ( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2] );
 }
 
+function matVecArrMult( vArr, matMult ){
+    if ( vArr[0].length != matMult.length )
+    { throw "Tried to do an invalid multiplication, matrix multiplication must be MxN * NxK"; }
+
+    if ( vArr.legth == 0 ) { throw "vArr length is 0, this is invalid" }
+    if ( vArr[0].length == 0 ) { throw "vArr[0] length is 0, this is invalid" }
+    if ( matMult.length == 0 ) { throw "matMult length is 0, this is invalid" }
+    if ( matMult[0].length == 0 ) { throw "matMult[0] length is 0, this is invalid" }
+
+    var result = [];
+    for ( var i = 0; i < vArr.length; ++i ) {
+        result.push( [] );
+
+        for ( var j = 0; j < matMult[0].length; ++j ) {
+            var sum = 0.0;
+            for ( var k = 0; k < matMult.length; ++k ) {
+                sum += vArr[i][k] * matMult[k][j];
+            }
+            result[i].push( sum );
+        }
+    }
+    return result;
+
+}
+
 // This is a very handy function that is pretty much
 // optimized as much as possible in order to ensure
 // we are spending less time converting and more time

@@ -103,18 +103,11 @@ function setupGL(){
 // asteroids, but this could ruin the look as well.
 function setupAsteroids() {
 
-    // These two variables are used for the radius of the
-    // asteroids. Where radMult is the multiplier on the 
-    // rand function, and the radDiff helps us specify
-    // a nice ring of where the radii can be. Much like
-    // the width of a disk.
-    var radMult = 40;
-    var radDiff = 5;
-
     var numOfAsteroids = 30;
-    var divsForAsteroids = 12;
-    
+    var size = 3;
     var speed = 90;
+
+    
 
     // Uses the above argument to generate that number of asteroids
     // to start with. This uses a lot of Math.random in order to ensure
@@ -122,39 +115,54 @@ function setupAsteroids() {
     // position the asteroid is on the canvas is random in both directions,
     // same with the velocity. 
     for (var asteroidAmount = 0; asteroidAmount < numOfAsteroids; asteroidAmount++) {
-        var center = vec2( Math.random() * w, Math.random() * h );
-
-        var stepAmount = 2 * Math.PI / divsForAsteroids;
-        var points = [];
-        for (var theta = 0; theta < 2 * Math.PI; theta += stepAmount) {
-            var rad = ( Math.random() * radMult) + (radMult - radDiff );
-            var x = rad * Math.cos( theta );
-            var y = rad * Math.sin( theta );
-            points.push( vec2( x, y ) );
-        }
-
+        
         // This speed value was trial-and-error arbitrarily set. There
         // was nothing special about this speed other than it looked okay
         // during initial testing.
         var vel = vec2( Math.random() * 2.0*speed - speed, Math.random() * 2.0*speed - speed );
-
-        // Calculate area, this will be used hopefully for energy conversion so that
-        // smaller asteroids broken off from larger ones will move faster by some amount
-        var area = 0;
-        for (var i = 1; i < points.length; i++) {
-            var currPt = points[i];
-            var prevPt = points[i - 1];
-            var side1 = vec3( prevPt[0], prevPt[1], 0 );
-            var side2 = vec3( currPt[0], currPt[1], 0 );
-            var crossProd = cross( side1, side2 );
-            area += mag( crossProd ) * .5;
-        }
-
-        var currRoid = new Asteroid( points, divsForAsteroids, center, vel, area );
-        roids.push( currRoid );
-        // console.log(`currRoid: ${currRoid}`);
+        var center = vec2( Math.random() * w, Math.random() * h );
+        makeAsteroid(size, vel, center);
     }
 
+}
+
+// Creates asteroids
+function makeAsteroid(size, vel, center){
+
+    // These two variables are used for the radius of the
+    // asteroids. Where radMult is the multiplier on the 
+    // rand function, and the radDiff helps us specify
+    // a nice ring of where the radii can be. Much like
+    // the width of a disk.
+    var radMult = 13*size; // Used to be 40
+    var radDiff = 1.6*size; // Used to be 5
+
+    var divsForAsteroids = 4*size; // Used to be 12
+
+    var stepAmount = 2 * Math.PI / divsForAsteroids;
+    var points = [];
+    for (var theta = 0; theta < 2 * Math.PI; theta += stepAmount) {
+        var rad = ( Math.random() * radMult) + (radMult - radDiff );
+        var x = rad * Math.cos( theta );
+        var y = rad * Math.sin( theta );
+        points.push( vec2( x, y ) );
+    }
+
+    // Calculate area, this will be used hopefully for energy conversion so that
+    // smaller asteroids broken off from larger ones will move faster by some amount
+    var area = 0;
+    for (var i = 1; i < points.length; i++) {
+        var currPt = points[i];
+        var prevPt = points[i - 1];
+        var side1 = vec3( prevPt[0], prevPt[1], 0 );
+        var side2 = vec3( currPt[0], currPt[1], 0 );
+        var crossProd = cross( side1, side2 );
+        area += mag( crossProd ) * .5;
+    }
+
+    var currRoid = new Asteroid( points, divsForAsteroids, center, vel, area, size );
+    roids.push( currRoid );
+    // console.log(`currRoid: ${currRoid}`);
 }
 
 function setupPlayer(){
@@ -237,8 +245,20 @@ function updateAsteroids( now ){
         // the current position of this asteroid.
         var currRoid = roids[i];
         var currVel = currRoid.velocity;
-        currRoid.position[0] += currVel[0]*timeDelta;
-        currRoid.position[1] += currVel[1]*timeDelta;
+
+        // Collision goes here!
+        if (currRoid.clicked == true && currRoid.size > 1){
+            var vel1 = changeDirection(currVel, Math.PI/4.0);
+            var vel2 = changeDirection(currVel, -Math.PI/4.0);
+            makeAsteroid( currRoid.size-1, vel1, currRoid.position );
+            makeAsteroid( currRoid.size-1, vel2, currRoid.position );
+            roidsToDelete.push(i);
+        } else if (currRoid.clicked == true && currRoid.size == 1) {
+            roidsToDelete.push(i);
+        } else {
+            currRoid.position[0] += currVel[0]*timeDelta;
+            currRoid.position[1] += currVel[1]*timeDelta;
+        }
 
         // This part of the code leverages knowledge of 
         // vector math as well as understanding the desired
@@ -296,8 +316,23 @@ function updateAsteroids( now ){
         }
         */
     }
+    // Deletes busted asteroids
+    var length = roidsToDelete.length;
+    for (var i = 0; i < length; i++){
+        roids.splice(roidsToDelete[0]-i,1);
+        roidsToDelete.splice(0,1);
+    }
+
     roids.sort( compareAsteroids );
 
+}
+
+// Changes direction of a vec2
+function changeDirection(dir, change){
+    var r = mag(vec3(dir[0], dir[1], 0.0));
+    var theta = Math.atan(dir[0]/dir[1]);
+    theta += change;
+    return vec2(r*Math.cos(theta),r*Math.sin(theta));
 }
 
 function updateEdgeAsteroids( now ){

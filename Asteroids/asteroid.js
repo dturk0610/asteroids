@@ -11,7 +11,7 @@ function Shape(x, y) {
     };
 }*/
 
-function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity = vec2( 0, 0 ), area = 0 ) {
+function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity = vec2( 0, 0 ), area = 0, size = 3 ) { // Added size
     var that = this;
     this.points = points;
     this.numPoints = numPoints;
@@ -19,6 +19,7 @@ function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity
     this.velocity = velocity;
     this.area = area;
     this.clicked = false;
+    this.size = size; // Added size
 
     that.isInside = function(point){
         // console.log(`point: ${point}`);

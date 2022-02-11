@@ -4,12 +4,13 @@ var invw, w;
 
 var pastTime = 0;
 
-var roidBuffer, edgeRoidBuffer;
+var roidBuffer, edgeRoidBuffer, asteroidShaderProgram;
 var roids = [], edgeRoids = [];
 var roidsToDelete = [];
 var timeDelta = 0;
 
-var asteroidShaderProgram;
+var player, playerBuffer, playerShaderProgram;
+
 
 function init(){
     var canvas=document.getElementById("asteroids-canvas");
@@ -39,6 +40,7 @@ function init(){
     // or at least in a similar manner.
     setupGL();
     setupAsteroids();
+    setupPlayer();
 
     window.requestAnimationFrame(animate);
 }
@@ -82,7 +84,12 @@ function setupGL(){
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT );
 
+    roidBuffer = gl.createBuffer();
+    edgeRoidBuffer = gl.createBuffer();
+    playerBuffer = gl.createBuffer();
+
     asteroidShaderProgram = initShaders( gl, "vertex-shader", "frag-asteroid" );
+    playerShaderProgram = initShaders( gl, "vertex-shader", "frag-player" );
 
 }
 
@@ -150,6 +157,25 @@ function setupAsteroids() {
 
 }
 
+function setupPlayer(){
+    var playerMult = 15.0;
+    var tip = vec2(0.0,1.0);
+    var leftTip = vec2(-.75, -1), rightTip = vec2(2*tip[0] - leftTip[0], leftTip[1] );
+    var leftPit = vec2(-.5, -.5), rightPit = vec2(2*tip[0] - leftPit[0], leftPit[1] );
+    var basicPoints = [];
+    basicPoints.push(scale(playerMult, tip));
+    basicPoints.push(scale(playerMult, leftTip));
+    basicPoints.push(scale(playerMult, leftPit));
+    basicPoints.push(scale(playerMult, rightPit));
+    basicPoints.push(scale(playerMult, rightTip));
+    var tempTheta = -90*Math.PI/180.0;
+    var rotateToXAxisMat = mat2([Math.cos(tempTheta), Math.sin(tempTheta)], [-Math.sin(tempTheta), Math.cos(tempTheta)]); 
+    var rotatedPoints = matVecArrMult(basicPoints, rotateToXAxisMat);
+
+    player = new Player(rotatedPoints, vec2(w*.5,h*.5), 0, 0);
+
+}
+
 // #endregion
 
 // The animate function is being used to update the time
@@ -171,6 +197,7 @@ function animate( now ){
 
     // Below here will ideally be other update functions
     // and render functions
+    drawPlayer();
 
     // Now that all has been updated and rendered, we update
     // the past time to now and request the next animation
@@ -331,11 +358,6 @@ function updateEdgeAsteroids( now ){
 // player.
 function drawAsteroids(){
 
-    // Checks if our roid buffer id is null, if is, we 
-    // generate a buffer for the gpu for it
-    if (!roidBuffer)
-        roidBuffer = gl.createBuffer();
-
     // Clears our buffer bit and then sets up our roid buffer
     gl.bindBuffer( gl.ARRAY_BUFFER, roidBuffer );
     gl.useProgram( asteroidShaderProgram );
@@ -381,10 +403,6 @@ function drawAsteroids(){
 
 function drawEdgeAsteroids(){
 
-    // Checks if our roid buffer id is null, if is, we 
-    // generate a buffer for the gpu for it
-    if (!edgeRoidBuffer)
-        edgeRoidBuffer = gl.createBuffer();
 
     // Clears our buffer bit and then sets up our roid buffer.
     gl.bindBuffer( gl.ARRAY_BUFFER, roidBuffer );
@@ -428,6 +446,30 @@ function drawEdgeAsteroids(){
         gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
     }
 }
+
+function drawPlayer(){
+
+    // Clears our buffer bit and then sets up our roid buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, playerBuffer);
+    gl.useProgram(playerShaderProgram);
+
+    // Sets up our shaders
+    var myPos = gl.getAttribLocation(playerShaderProgram, "myPosition");
+    gl.enableVertexAttribArray(myPos);
+    gl.vertexAttribPointer(myPos, 2, gl.FLOAT, false, 0, 0);
+
+    var playerPoints = player.calculatePlayerPoints();
+    var pointsToRender = [];
+    for (var i = 0; i < playerPoints.length; i++){
+        pointsToRender.push(convertCanvasPosToView(playerPoints[i][0], playerPoints[i][1]));
+    }
+
+
+    gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
+    gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
+
+}
+
 // #endregion
 
 // #region USEFUL FUNCTIONS REGION
@@ -466,6 +508,7 @@ function dot ( v1, v2 ){
 }
 
 function matVecArrMult( vArr, matMult ){
+    
     if ( vArr[0].length != matMult.length )
     { throw "Tried to do an invalid multiplication, matrix multiplication must be MxN * NxK"; }
 

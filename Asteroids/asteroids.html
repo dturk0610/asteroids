@@ -5,6 +5,7 @@
         <script type="text/javascript" src="../Common/initShaders.js"></script>
         <script type="text/javascript" src="../Common/MV.js"></script>
         <script type="text/javascript" src="asteroid.js"></script>
+        <script type="text/javascript" src="player.js"></script>
         <script type="text/javascript" src="game.js"></script>
 
         <script id="vertex-shader" type="x-shader/x-vertex">
@@ -24,6 +25,12 @@
                     gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
                 else
                     gl_FragColor = vec4( 0.0, 1.0, 1.0, 1.0 );
+            }
+        </script>
+
+        <script id="frag-player" type="x-shader/x-fragment">
+            void main(){
+                gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
             }
         </script>
 

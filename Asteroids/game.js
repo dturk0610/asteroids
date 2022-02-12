@@ -5,11 +5,14 @@ var invw, w;
 var pastTime = 0;
 
 var roidBuffer, edgeRoidBuffer, asteroidShaderProgram;
+var player, playerBuffer, playerShaderProgram;
 var roids = [], edgeRoids = [];
 var roidsToDelete = [];
 var timeDelta = 0;
 
-var player, playerBuffer, playerShaderProgram;
+var divsForAsteroids = 12;  // there is no reason to decrease
+                            // the number of points for smaller
+                            // asteroids..
 
 
 function init(){
@@ -68,6 +71,7 @@ function tryClickAsteroid(canvas, event) {
                                     // function works will be
                                     // pasted at the bottom of
                                     // this script
+
             //console.log(`clicked asteroid: ${roids[i]}`);
         }
     } 
@@ -121,7 +125,8 @@ function setupAsteroids() {
         // during initial testing.
         var vel = vec2( Math.random() * 2.0*speed - speed, Math.random() * 2.0*speed - speed );
         var center = vec2( Math.random() * w, Math.random() * h );
-        makeAsteroid(size, vel, center);
+        var newRoid = makeAsteroid(size, vel, center);
+        roids.push(newRoid);
     }
 
 }
@@ -137,7 +142,6 @@ function makeAsteroid(size, vel, center){
     var radMult = 13*size; // Used to be 40
     var radDiff = 1.6*size; // Used to be 5
 
-    var divsForAsteroids = 4*size; // Used to be 12
 
     var stepAmount = 2 * Math.PI / divsForAsteroids;
     var points = [];
@@ -161,7 +165,7 @@ function makeAsteroid(size, vel, center){
     }
 
     var currRoid = new Asteroid( points, divsForAsteroids, center, vel, area, size );
-    roids.push( currRoid );
+    return currRoid;
     // console.log(`currRoid: ${currRoid}`);
 }
 
@@ -248,10 +252,14 @@ function updateAsteroids( now ){
 
         // Collision goes here!
         if (currRoid.clicked == true && currRoid.size > 1){
-            var vel1 = changeDirection(currVel, Math.PI/4.0);
-            var vel2 = changeDirection(currVel, -Math.PI/4.0);
-            makeAsteroid( currRoid.size-1, vel1, currRoid.position );
-            makeAsteroid( currRoid.size-1, vel2, currRoid.position );
+            var vel1 = rotateVelocity(currVel, Math.PI/8.0);
+            var vel2 = rotateVelocity(currVel, -Math.PI/8.0);
+            var tempPos1 = vec2( currRoid.position[0], currRoid.position[1] );
+            var tempPos2 = vec2( currRoid.position[0], currRoid.position[1] );
+            var newRoid1 = makeAsteroid( currRoid.size-1, vel1, tempPos1 );
+            var newRoid2 = makeAsteroid( currRoid.size-1, vel2, tempPos2 );
+            roids.push( newRoid1 );
+            roids.push( newRoid2 );
             roidsToDelete.push(i);
         } else if (currRoid.clicked == true && currRoid.size == 1) {
             roidsToDelete.push(i);
@@ -319,8 +327,11 @@ function updateAsteroids( now ){
     // Deletes busted asteroids
     var length = roidsToDelete.length;
     for (var i = 0; i < length; i++){
-        roids.splice(roidsToDelete[0]-i,1);
-        roidsToDelete.splice(0,1);
+        console.log(roids.length);
+        roids.splice(roidsToDelete.pop(),1);
+        console.log(roids.length);
+
+        console.log(roids);
     }
 
     roids.sort( compareAsteroids );
@@ -328,17 +339,18 @@ function updateAsteroids( now ){
 }
 
 // Changes direction of a vec2
-function changeDirection(dir, change){
-    var r = mag(vec3(dir[0], dir[1], 0.0));
-    var theta = Math.atan(dir[0]/dir[1]);
-    theta += change;
-    return vec2(r*Math.cos(theta),r*Math.sin(theta));
+function rotateVelocity(vel, theta){
+    var rotMat = mat2([Math.cos(theta), Math.sin(theta)],[-Math.sin(theta), Math.cos(theta)]);
+    var velArr = [vel];
+    velArr = matVecArrMult(velArr, rotMat);
+    return vec2(velArr[0][0], velArr[0][1]);
 }
 
+/*
 function updateEdgeAsteroids( now ){
     var timeDelta = now - pastTime;
 
-    
+
     // Stoes the value of the length before any update are
     // made, just in case there are additions to the array
     // as the update happens. It should be noted that we
@@ -382,7 +394,7 @@ function updateEdgeAsteroids( now ){
         edgeRoids.splice(indexesToDelete[i] - i, 1);
     }
 
-}
+}*/
 
 // #endregion
 

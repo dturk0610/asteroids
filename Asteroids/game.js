@@ -3,12 +3,14 @@ var invh, h;
 var invw, w;
 
 var pastTime = 0;
+var lastJump = 0;
 
 var roidBuffer, edgeRoidBuffer, asteroidShaderProgram;
 var player, playerBuffer, playerShaderProgram;
 var roids = [], edgeRoids = [];
 var roidsToDelete = [];
 var timeDelta = 0;
+var keyA, keyD, keyS, keyW;
 
 var numOfAsteroids = 3;
 var divsForAsteroids = 12;  // there is no reason to decrease
@@ -67,7 +69,7 @@ function onKeyDown(event) {
         case 65:  //a
             keyA = true;
             break;
-        case 87:  //a
+        case 87:  //w
             keyW = true;
             break;
     }
@@ -83,6 +85,9 @@ function onKeyUp(event) {
             break;
         case 65: //a
             keyA = false;
+            break;
+            case 87: //w
+            keyW = false;
             break;
     }
 }
@@ -549,6 +554,23 @@ function updatePlayer(now){
     // calculates the difference in time between this frame
     // and last frame.
     var timeDelta = now - pastTime;
+
+    // update theta
+    if(keyA) player.theta += Math.PI/32;
+    if(keyD) player.theta += -Math.PI/32;
+    if(keyA || keyD) player.updateRotMat(player.theta);
+
+    // update speed
+    if(keyW && player.speed < 500) player.speed += 20;
+    else player.speed -= 20;
+    if (player.speed < 0) player.speed = 0;
+
+    // move player
+    if(keyS && now-lastJump > 0.3){
+        player.position[0] = Math.random() * w;
+        player.position[1] = Math.random() * h;
+        lastJump = now;
+    }
     player.position[0] += timeDelta*player.speed*Math.cos(player.theta);
     player.position[1] += timeDelta*player.speed*Math.sin(player.theta);
 }

@@ -12,24 +12,25 @@ function Shape(x, y) {
 }*/
 
 function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity = vec2( 0, 0 ), area = 0, size = 3 ) { // Added size
-    var that = this;
     this.points = points;
     this.numPoints = numPoints;
     this.position = position;
     this.velocity = velocity;
     this.area = area;
+    this.id = 0;
     this.clicked = false;
     this.goingOffScreen = false;
+    this.momentum = mag(vec3(velocity[0], velocity[1], 0)) * area;
     this.size = size; // Added size
 
-    that.isInside = function(point){
+    this.isInside = function(point){
         // console.log(`point: ${point}`);
         // console.log(`pos: ${position}`);
         var countCross = 0;
-        var n = that.points.length;
+        var n = this.points.length;
 		for (var i = 0; i < n; i ++){
-			var p = vec2(that.points[i][0] + that.position[0], that.points[i][1] + that.position[1]);
-			var r = vec2(that.points[(i + 1) % n][0] + that.position[0], that.points[(i + 1) % n][1] + that.position[1]);
+			var p = vec2(this.points[i][0] + this.position[0], this.points[i][1] + this.position[1]);
+			var r = vec2(this.points[(i + 1) % n][0] + this.position[0], this.points[(i + 1) % n][1] + this.position[1]);
 			var q = vec2(point[0], point[1]);
 			if ((q[0] < p[0] || q[0] < r[0]) && //q.x <= Mathf.Max(p.x, r.x) && q.x >= Mathf.Min(p.x, r.x) && 
             	q[1] <= Math.max(p[1], r[1]) && q[1] >= Math.min(p[1], r[1])) {
@@ -47,7 +48,7 @@ function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity
     }
 
     //Inorder to format strings like this, use a "backtick" `````  < these versus '''' < those, or """" < that
-    that.toString = function () {
+    this.toString = function () {
         var retStr = "Points: [ ";
         for (var i = 0; i < this.numPoints; i++) {
             retStr += `(${points[i][0]}, ${points[i][1]})`;

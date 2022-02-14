@@ -10,11 +10,12 @@ var roids = [], edgeRoids = [];
 var roidsToDelete = [];
 var timeDelta = 0;
 
-var numOfAsteroids = 15;
+var numOfAsteroids = 3;
 var divsForAsteroids = 12;  // there is no reason to decrease
                             // the number of points for smaller
                             // asteroids..
 
+var astID = 0;
 
 function init(){
     var canvas=document.getElementById("asteroids-canvas");
@@ -201,6 +202,8 @@ function makeAsteroid(size, vel, center){
     }
 
     var currRoid = new Asteroid( points, divsForAsteroids, center, vel, area, size );
+    currRoid.id = astID;
+    astID++;
     return currRoid;
     // console.log(`currRoid: ${currRoid}`);
 }
@@ -295,7 +298,11 @@ function updateAsteroids( now ){
             var newRoid2 = makeAsteroid( currRoid.size-1, vel2, vec2( center[0], center[1] ) );
             roids.push( newRoid1 );
             roids.push( newRoid2 );
-            roidsToDelete.push(i);
+            for ( var j = 0; j < roids.length; j++ ){
+                if (currRoid.id == roids[j].id){
+                    roidsToDelete.push(j);
+                }
+            }
         } else if (currRoid.clicked == true && currRoid.size == 1) {
             roidsToDelete.push(i);
         } else {
@@ -346,10 +353,11 @@ function updateAsteroids( now ){
 
         if (mag(vec3(outsidePointVal[0], outsidePointVal[1], 0)) > 1 && !currRoid.goingOffScreen){
             currRoid.goingOffScreen = true;
-            var edgeRoid = Object.assign({}, currRoid);
+            var edgeRoid = new Asteroid();
+            Object.assign(edgeRoid, currRoid);
             edgeRoid.position = vec2(currRoid.position[0], currRoid.position[1]);
             edgeRoid.goingOffScreen = false;
-            //console.log(edgeRoid == currRoid);
+            edgeRoid.clicked = false;
             edgeRoid.position[0] += outsidePointVal[0];
             edgeRoid.position[1] += outsidePointVal[1];
             roids.push(edgeRoid);

@@ -248,6 +248,7 @@ function animate( now ){
 
     // Below here will ideally be other update functions
     // and render functions
+    updatePlayer( now );
     drawPlayer();
 
     // Now that all has been updated and rendered, we update
@@ -542,6 +543,14 @@ function drawEdgeAsteroids(){
 
         gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
     }
+}
+
+function updatePlayer(now){
+    // calculates the difference in time between this frame
+    // and last frame.
+    var timeDelta = now - pastTime;
+    player.position[0] += timeDelta*player.speed*Math.cos(player.theta);
+    player.position[1] += timeDelta*player.speed*Math.sin(player.theta);
 }
 
 function drawPlayer(){

@@ -40,9 +40,6 @@ function init(){
     canvas.addEventListener("mousedown", function(e)
     { tryClickAsteroid(canvas, e); }); 
 
-    //event listener
-    window.addEventListener("keydown", onKeyDown, false);
-    window.addEventListener("keyup", onKeyUp, false);
 
     // Then we call the setup functions which will just prepare GL and our
     // asteroids. Eventually the player setup code should be called here
@@ -53,7 +50,6 @@ function init(){
 
     window.requestAnimationFrame(animate);
 }
-
 
 // This event function is used to test the isInside functionality
 // Hopefull this will be useful in later version, for possible 

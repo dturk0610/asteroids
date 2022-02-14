@@ -1,5 +1,3 @@
-
-
 // THETA IS ASSUMED TO BE IN RADIANS OFF X AXIS
 function Player ( points, position = vec2(0, 0), speed = 0, theta = 0 ){
     var that = this;
@@ -29,5 +27,10 @@ function Player ( points, position = vec2(0, 0), speed = 0, theta = 0 ){
         }
         return rotPoints;
     };
+}
 
+// RADIUS IS ASSUMED TO BE IN PIXELS
+function Bullet ( center, radius ){
+    this.position = center;
+    this.radius = radius;
 }

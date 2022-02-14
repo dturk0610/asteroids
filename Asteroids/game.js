@@ -55,39 +55,6 @@ function init(){
 }
 
 
-function onKeyDown(event) {
-    var keyCode = event.keyCode;
-    switch (keyCode) {
-        case 68:  //d
-            keyD = true;
-            break;
-        case 83:  //s
-            keyS = true;
-            break;
-        case 65:  //a
-            keyA = true;
-            break;
-        case 87:  //a
-            keyW = true;
-            break;
-    }
-}
-function onKeyUp(event) {
-    var keyCode = event.keyCode;
-    switch (keyCode) {
-        case 68:  //d
-            keyD = false;
-            break;
-        case 83:  //s
-            keyS = false;
-            break;
-        case 65: //a
-            keyA = false;
-            break;
-    }
-}
-
-
 // This event function is used to test the isInside functionality
 // Hopefull this will be useful in later version, for possible 
 // collision detection.

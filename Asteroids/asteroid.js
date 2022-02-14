@@ -19,6 +19,7 @@ function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity
     this.velocity = velocity;
     this.area = area;
     this.clicked = false;
+    this.goingOffScreen = false;
     this.size = size; // Added size
 
     that.isInside = function(point){

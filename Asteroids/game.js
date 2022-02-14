@@ -38,6 +38,10 @@ function init(){
     canvas.addEventListener("mousedown", function(e)
     { tryClickAsteroid(canvas, e); }); 
 
+    //event listener
+    window.addEventListener("keydown", onKeyDown, false);
+    window.addEventListener("keyup", onKeyUp, false);
+
     // Then we call the setup functions which will just prepare GL and our
     // asteroids. Eventually the player setup code should be called here
     // or at least in a similar manner.
@@ -47,6 +51,40 @@ function init(){
 
     window.requestAnimationFrame(animate);
 }
+
+
+function onKeyDown(event) {
+    var keyCode = event.keyCode;
+    switch (keyCode) {
+        case 68:  //d
+            keyD = true;
+            break;
+        case 83:  //s
+            keyS = true;
+            break;
+        case 65:  //a
+            keyA = true;
+            break;
+        case 87:  //a
+            keyW = true;
+            break;
+    }
+}
+function onKeyUp(event) {
+    var keyCode = event.keyCode;
+    switch (keyCode) {
+        case 68:  //d
+            keyD = false;
+            break;
+        case 83:  //s
+            keyS = false;
+            break;
+        case 65: //a
+            keyA = false;
+            break;
+    }
+}
+
 
 // This event function is used to test the isInside functionality
 // Hopefull this will be useful in later version, for possible 
@@ -249,23 +287,22 @@ function updateAsteroids( now ){
         // the current position of this asteroid.
         var currRoid = roids[i];
         var currVel = currRoid.velocity;
+        var center = currRoid.position;
 
         // Collision goes here!
         if (currRoid.clicked == true && currRoid.size > 1){
             var vel1 = rotateVelocity(currVel, Math.PI/8.0);
             var vel2 = rotateVelocity(currVel, -Math.PI/8.0);
-            var tempPos1 = vec2( currRoid.position[0], currRoid.position[1] );
-            var tempPos2 = vec2( currRoid.position[0], currRoid.position[1] );
-            var newRoid1 = makeAsteroid( currRoid.size-1, vel1, tempPos1 );
-            var newRoid2 = makeAsteroid( currRoid.size-1, vel2, tempPos2 );
+            var newRoid1 = makeAsteroid( currRoid.size-1, vel1, vec2( center[0], center[1] ) );
+            var newRoid2 = makeAsteroid( currRoid.size-1, vel2, vec2( center[0], center[1] ) );
             roids.push( newRoid1 );
             roids.push( newRoid2 );
             roidsToDelete.push(i);
         } else if (currRoid.clicked == true && currRoid.size == 1) {
             roidsToDelete.push(i);
         } else {
-            currRoid.position[0] += currVel[0]*timeDelta;
-            currRoid.position[1] += currVel[1]*timeDelta;
+            center[0] += currVel[0]*timeDelta;
+            center[1] += currVel[1]*timeDelta;
         }
 
         // This part of the code leverages knowledge of 
@@ -281,48 +318,65 @@ function updateAsteroids( now ){
         // it back to the left side of the screen. Similar logic can be
         // understood to get it to scroll endlessly to the left, up or
         // down.
-        if ((currRoid.position[0] > w) && dir[0] > 0){ currRoid.position[0] -= w; }
-        if ((currRoid.position[0] < 0) && dir[0] < 0){ currRoid.position[0] += w; }
+        if (( center[0] > w ) && dir[0] > 0 && ! currRoid.goingOffScreen ){
+            currRoid.goingOffScreen = true;
+            var edgeRoid = new Asteroid();
+            edgeRoid = Object.assign(edgeRoid, currRoid);
+            edgeRoid.position[0] -= w;
+            edgeRoid.goingOffScreen = false;
+            //roids.push(edgeRoid);
+        }
+        if (( center[0] < 0 ) && dir[0] < 0 && ! currRoid.goingOffScreen ){
+            currRoid.goingOffScreen = true;
+            var edgeRoid = new Asteroid();
+            edgeRoid = Object.assign(edgeRoid, currRoid);
+            edgeRoid.position[0] += w;
+            edgeRoid.goingOffScreen = false;
+            //roids.push(edgeRoid);
+        }
 
-        if ((currRoid.position[1] > h) && dir[1] > 0){ currRoid.position[1] -= h; }
-        if ((currRoid.position[1] < 0) && dir[1] < 0){ currRoid.position[1] += h; }
-        /*
+        if (( center[1] > h ) && dir[1] > 0 && ! currRoid.goingOffScreen ){
+            currRoid.goingOffScreen = true;
+            var edgeRoid = new Asteroid();
+            edgeRoid = Object.assign(edgeRoid, currRoid);
+            edgeRoid.position[1] -= h;
+            edgeRoid.goingOffScreen = false;
+            //roids.push(edgeRoid);
+        }
+        if (( center[1] < 0 ) && dir[1] < 0 && ! currRoid.goingOffScreen ){
+            currRoid.goingOffScreen = true;
+            var edgeRoid = new Asteroid();
+            edgeRoid = Object.assign(edgeRoid, currRoid);
+            edgeRoid.position[1] += w;
+            edgeRoid.goingOffScreen = false;
+            //roids.push(edgeRoid);
+        }
         // Assume to be true, but then change to false when one is in view.
         var allPointsOutOfView = true;
-        var needEdgeRoid = false;
-        var dirFlagAdder = vec2(0,0);
         for (var j = 0; j < currRoid.points.length; j++){
             var currPoint = currRoid.points[j];
             var offScreen = false;
             // If the point's x is out of range and the asteroid is moving
             // in a positive maner, 
-            if ((currPoint[0] > w) && dir[0] > 0){ needEdgeRoid = true; dirFlagAdder[0] = -w; offScreen = true; }
-            if ((currPoint[0] < 0) && dir[0] < 0){ needEdgeRoid = true; dirFlagAdder[0] = w;  offScreen = true; }
+            if ((currPoint[0] + currRoid.position[0] > w) && dir[0] > 0){ offScreen = true; }
+            if ((currPoint[0] + currRoid.position[0] < 0) && dir[0] < 0){ offScreen = true; }
 
-            if ((currPoint[1] > h) && dir[1] > 0){ needEdgeRoid = true; dirFlagAdder[1] = -h; offScreen = true; }
-            if ((currPoint[1] < 0) && dir[1] < 0){ needEdgeRoid = true; dirFlagAdder[1] = h; offScreen = true; }
+            if ((currPoint[1] + currRoid.position[1] > h) && dir[1] > 0){ offScreen = true; }
+            if ((currPoint[1] + currRoid.position[1] < 0) && dir[1] < 0){ offScreen = true; }
             allPointsOutOfView &= offScreen;
-        }
-        if (needEdgeRoid){
-            var alreadExists = false;
-            var tempRoid = new Asteroid();
-            tempRoid = Object.assign(tempRoid, currRoid);
-            edgeRoids.forEach((edgeRoid) => {
-                if (isEqual(edgeRoid, tempRoid)){ alreadExists = true; }
-            });
-
-            if (!alreadExists){ 
-                tempRoid.position[0] += dirFlagAdder[0];
-                tempRoid.position[1] += dirFlagAdder[1]; 
-                //console.log("tempRoid: " + tempRoid.position); 
-                //console.log("currRoid: " + currRoid.position);
-                edgeRoids.push(tempRoid); 
+        }/*
+        if (allPointsOutOfView){
+            var canPush = true;
+            for (var i = 0; j < roidsToDelete.length; j++ ){
+                if (isEqual(roidsToDelete[j], currRoid)){
+                    canPush = false;
+                    break;`
+                }
             }
-
-            //console.log(isEqual(tempRoid, currRoid));
-            //console.log("I hope this worked");
-        }
-        */
+            if (canPush){
+                roidsToDelete.push(i);
+            }
+        }*/
     }
     // Deletes busted asteroids
     var length = roidsToDelete.length;

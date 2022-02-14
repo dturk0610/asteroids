@@ -10,6 +10,7 @@ var roids = [], edgeRoids = [];
 var roidsToDelete = [];
 var timeDelta = 0;
 
+var numOfAsteroids = 15;
 var divsForAsteroids = 12;  // there is no reason to decrease
                             // the number of points for smaller
                             // asteroids..
@@ -145,11 +146,8 @@ function setupGL(){
 // asteroids, but this could ruin the look as well.
 function setupAsteroids() {
 
-    var numOfAsteroids = 30;
     var size = 3;
-    var speed = 90;
-
-    
+    var speed = 90;    
 
     // Uses the above argument to generate that number of asteroids
     // to start with. This uses a lot of Math.random in order to ensure
@@ -311,6 +309,7 @@ function updateAsteroids( now ){
         // them to scroll endlessly across the screen.
         var velMag = mag( vec3( currVel[0], currVel[1], 0 ) );
         var dir = vec2( currVel[0]/velMag, currVel[1]/velMag );
+        let adjustPosVal = vec2(0, 0);
 
         // If the asteroid is moving in the positive x direction, and has
         // a larger x value that the actual canvas size, we know we can
@@ -318,74 +317,60 @@ function updateAsteroids( now ){
         // it back to the left side of the screen. Similar logic can be
         // understood to get it to scroll endlessly to the left, up or
         // down.
-        if (( center[0] > w ) && dir[0] > 0 && ! currRoid.goingOffScreen ){
-            currRoid.goingOffScreen = true;
-            var edgeRoid = new Asteroid();
-            edgeRoid = Object.assign(edgeRoid, currRoid);
-            edgeRoid.position[0] -= w;
-            edgeRoid.goingOffScreen = false;
-            //roids.push(edgeRoid);
-        }
-        if (( center[0] < 0 ) && dir[0] < 0 && ! currRoid.goingOffScreen ){
-            currRoid.goingOffScreen = true;
-            var edgeRoid = new Asteroid();
-            edgeRoid = Object.assign(edgeRoid, currRoid);
-            edgeRoid.position[0] += w;
-            edgeRoid.goingOffScreen = false;
-            //roids.push(edgeRoid);
-        }
+        if (( center[0] > w ) && dir[0] > 0 ){ adjustPosVal[0] = -w; }
+        if (( center[0] < 0 ) && dir[0] < 0 ){ adjustPosVal[0] = w; }
 
-        if (( center[1] > h ) && dir[1] > 0 && ! currRoid.goingOffScreen ){
-            currRoid.goingOffScreen = true;
-            var edgeRoid = new Asteroid();
-            edgeRoid = Object.assign(edgeRoid, currRoid);
-            edgeRoid.position[1] -= h;
-            edgeRoid.goingOffScreen = false;
-            //roids.push(edgeRoid);
-        }
-        if (( center[1] < 0 ) && dir[1] < 0 && ! currRoid.goingOffScreen ){
-            currRoid.goingOffScreen = true;
-            var edgeRoid = new Asteroid();
-            edgeRoid = Object.assign(edgeRoid, currRoid);
-            edgeRoid.position[1] += w;
-            edgeRoid.goingOffScreen = false;
-            //roids.push(edgeRoid);
-        }
+        if (( center[1] > h ) && dir[1] > 0 ){ adjustPosVal[1] = -h; }
+        if (( center[1] < 0 ) && dir[1] < 0 ){ adjustPosVal[1] = h; }
+
+        //center[0] += adjustPosVal[0];
+        //center[1] += adjustPosVal[1];
+
+
         // Assume to be true, but then change to false when one is in view.
         var allPointsOutOfView = true;
+        let outsidePointVal = vec2(0, 0);
         for (var j = 0; j < currRoid.points.length; j++){
+
             var currPoint = currRoid.points[j];
             var offScreen = false;
             // If the point's x is out of range and the asteroid is moving
             // in a positive maner, 
-            if ((currPoint[0] + currRoid.position[0] > w) && dir[0] > 0){ offScreen = true; }
-            if ((currPoint[0] + currRoid.position[0] < 0) && dir[0] < 0){ offScreen = true; }
+            if ((currPoint[0] + center[0] > w) && dir[0] > 0){ outsidePointVal[0] = -w; offScreen = true; }
+            if ((currPoint[0] + center[0] < 0) && dir[0] < 0){ outsidePointVal[0] = w; offScreen = true; }
 
-            if ((currPoint[1] + currRoid.position[1] > h) && dir[1] > 0){ offScreen = true; }
-            if ((currPoint[1] + currRoid.position[1] < 0) && dir[1] < 0){ offScreen = true; }
+            if ((currPoint[1] + center[1] > h) && dir[1] > 0){ outsidePointVal[1] = -h; offScreen = true; }
+            if ((currPoint[1] + center[1] < 0) && dir[1] < 0){ outsidePointVal[1] = h; offScreen = true; }
             allPointsOutOfView &= offScreen;
-        }/*
+        }
+
+        if (mag(vec3(outsidePointVal[0], outsidePointVal[1], 0)) > 1 && !currRoid.goingOffScreen){
+            currRoid.goingOffScreen = true;
+            var edgeRoid = Object.assign({}, currRoid);
+            edgeRoid.position = vec2(currRoid.position[0], currRoid.position[1]);
+            edgeRoid.goingOffScreen = false;
+            //console.log(edgeRoid == currRoid);
+            edgeRoid.position[0] += outsidePointVal[0];
+            edgeRoid.position[1] += outsidePointVal[1];
+            roids.push(edgeRoid);
+        }
         if (allPointsOutOfView){
             var canPush = true;
-            for (var i = 0; j < roidsToDelete.length; j++ ){
+            for (var j = 0; j < roidsToDelete.length; j++ ){
                 if (isEqual(roidsToDelete[j], currRoid)){
                     canPush = false;
-                    break;`
+                    break;
                 }
             }
             if (canPush){
                 roidsToDelete.push(i);
             }
-        }*/
+        }
     }
     // Deletes busted asteroids
     var length = roidsToDelete.length;
     for (var i = 0; i < length; i++){
-        console.log(roids.length);
         roids.splice(roidsToDelete.pop(),1);
-        console.log(roids.length);
-
-        console.log(roids);
     }
 
     roids.sort( compareAsteroids );

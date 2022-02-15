@@ -393,63 +393,30 @@ function updateAsteroids( now ){
 
 }
 
-// Changes direction of a vec2
-function rotateVelocity(vel, theta){
-    var rotMat = mat2([Math.cos(theta), Math.sin(theta)],[-Math.sin(theta), Math.cos(theta)]);
-    var velArr = [vel];
-    velArr = matVecArrMult(velArr, rotMat);
-    return vec2(velArr[0][0], velArr[0][1]);
-}
-
-/*
-function updateEdgeAsteroids( now ){
+function updatePlayer(now){
+    // calculates the difference in time between this frame
+    // and last frame.
     var timeDelta = now - pastTime;
 
+    // update theta
+    if(keyA) player.theta += Math.PI/32;
+    if(keyD) player.theta += -Math.PI/32;
+    if(keyA || keyD) player.updateRotMat(player.theta);
 
-    // Stoes the value of the length before any update are
-    // made, just in case there are additions to the array
-    // as the update happens. It should be noted that we
-    // should have separate arrays setup specifically
-    // dedicated to deleting asteroids as we blow them up
-    // or for any other reason.
-    var currCount = edgeRoids.length;
-    var indexesToDelete = [];
+    // update speed
+    if(keyW && player.speed < 500) player.speed += 20;
+    else player.speed -= 20;
+    if (player.speed < 0) player.speed = 0;
 
-    // Loops through all asteroids and updates their
-    // positions. It then uses vector math and some logic
-    // to move the asteroid to the oposite side of the
-    // screen to give the effect of continuous movement.
-    for (var i = 0; i < currCount; i++){
-
-        // Gets the current asteroid just for ease of use,
-        // same thing with velocity. Uses these to move
-        // the current position of this asteroid.
-        var currRoid = edgeRoids[i];
-        var currVel = currRoid.velocity;
-        currRoid.position[0] += currVel[0]*timeDelta;
-        currRoid.position[1] += currVel[1]*timeDelta;
-
-        // This part of the code leverages knowledge of 
-        // vector math as well as understanding the desired
-        // movement effect of the asteroids in order to get
-        // them to scroll endlessly across the screen.
-        var velMag = mag( vec3( currVel[0], currVel[1], 0 ) );
-        var dir = vec2( currVel[0]/velMag, currVel[1]/velMag );
-        var needToDelete = false;
-        if ((currRoid.position[0] > 0) && dir[0] > 0){ needToDelete = true; }
-        if ((currRoid.position[0] < w) && dir[0] < 0){ needToDelete = true; }
-
-        if ((currRoid.position[1] > 0) && dir[1] > 0){ needToDelete = true; }
-        if ((currRoid.position[1] < h) && dir[1] < 0){ needToDelete = true; }
-
-        if (needToDelete) { indexesToDelete.push(i); }
+    // move player
+    if(keyS && now-lastJump > 0.3){
+        player.position[0] = Math.random() * w;
+        player.position[1] = Math.random() * h;
+        lastJump = now;
     }
-
-    for (var i = 0; i < indexesToDelete.length; i++){
-        edgeRoids.splice(indexesToDelete[i] - i, 1);
-    }
-
-}*/
+    player.position[0] += timeDelta*player.speed*Math.cos(player.theta);
+    player.position[1] += timeDelta*player.speed*Math.sin(player.theta);
+}
 
 // #endregion
 
@@ -502,77 +469,6 @@ function drawAsteroids(){
 
         gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
     }
-}
-
-function drawEdgeAsteroids(){
-
-
-    // Clears our buffer bit and then sets up our roid buffer.
-    gl.bindBuffer( gl.ARRAY_BUFFER, roidBuffer );
-    gl.useProgram( asteroidShaderProgram );
-
-    // Sets up our shaders
-    var myPos = gl.getAttribLocation( asteroidShaderProgram, "myPosition" );
-    gl.enableVertexAttribArray( myPos );
-    gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
-
-    // Loops through all asteroids, uses the point positions
-    // and the asteroids positions and the convertCanvasPosToView
-    // in order to calculate the points' positions in the viewport.
-    // All of these converted positions are saved to a pointsToRender
-    // array and then rendered with the gl.LINE_LOOP to get the generic
-    // Atari asteroids look.
-    for (var i = 0; i < edgeRoids.length; i++){
-
-        // Only points saved to this array will actually be rendered.
-        var pointsToRender = [];
-        var currRoid = edgeRoids[i];
-        var center = currRoid.position;
-
-        // Loops through each point making up the current asteroid and
-        // converts the canvas space position to the viewport space
-        // position.
-        for (var j = 0; j < currRoid.points.length; j++){
-            var point = currRoid.points[j];
-            pointsToRender.push( convertCanvasPosToView( point[0] + center[0], point[1] + center[1] ) );
-        }
-
-        gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
-
-        // Special uniform to surprise the user when they click on some
-        // asteroids. This whole idea with the click and uniform on the
-        // fragment shader and be used to our advantage in order to have
-        // cool effects on asteroids that are hit.
-        var clickUniform = gl.getUniformLocation( asteroidShaderProgram, "clicked" );
-        gl.uniform1i( clickUniform, currRoid.clicked );
-
-        gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
-    }
-}
-
-function updatePlayer(now){
-    // calculates the difference in time between this frame
-    // and last frame.
-    var timeDelta = now - pastTime;
-
-    // update theta
-    if(keyA) player.theta += Math.PI/32;
-    if(keyD) player.theta += -Math.PI/32;
-    if(keyA || keyD) player.updateRotMat(player.theta);
-
-    // update speed
-    if(keyW && player.speed < 500) player.speed += 20;
-    else player.speed -= 20;
-    if (player.speed < 0) player.speed = 0;
-
-    // move player
-    if(keyS && now-lastJump > 0.3){
-        player.position[0] = Math.random() * w;
-        player.position[1] = Math.random() * h;
-        lastJump = now;
-    }
-    player.position[0] += timeDelta*player.speed*Math.cos(player.theta);
-    player.position[1] += timeDelta*player.speed*Math.sin(player.theta);
 }
 
 function drawPlayer(){
@@ -668,6 +564,14 @@ function matVecArrMult( vArr, matMult ){
 // inverse height and width values becomes useful
 function convertCanvasPosToView( x, y ){
    return vec2( (x*invw*2.0) - 1, (y*invh*2.0) - 1 );
+}
+
+// Changes direction of a vec2
+function rotateVelocity(vel, theta){
+    var rotMat = mat2([Math.cos(theta), Math.sin(theta)],[-Math.sin(theta), Math.cos(theta)]);
+    var velArr = [vel];
+    velArr = matVecArrMult(velArr, rotMat);
+    return vec2(velArr[0][0], velArr[0][1]);
 }
 
 // #endregion

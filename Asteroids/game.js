@@ -377,7 +377,7 @@ function updateAsteroids( now ){
     roids.sort( compareAsteroids );
 
     if (roids.length == 0){
-        if (numOfAsteroids + 1 <= maxSpawnAsteroids)
+        if (numOfAsteroids < maxSpawnAsteroids)
         numOfAsteroids++;
         setupNewSetOfAsteroids();
     }

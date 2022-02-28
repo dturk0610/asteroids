@@ -5,19 +5,25 @@ var invw, w;
 var pastTime = 0;
 var lastJump = 0;
 
-var roidBuffer, edgeRoidBuffer, asteroidShaderProgram;
-var player, playerBuffer, playerShaderProgram;
-var roids = [], edgeRoids = [];
+var roidBuffer, asteroidShaderProgram;
+var roids = [];
 var roidsToDelete = [];
-var timeDelta = 0;
-var keyA, keyD, keyS, keyW;
 
-var numOfAsteroids = 3;
+var player, playerBuffer, playerShaderProgram;
+
+var timeDelta = 0;
+var keyW, keyA, keyS, keyD;
+
+var astID = 0;
+var numOfAsteroids = 3, maxSpawnAsteroids = 10;
 var divsForAsteroids = 12;  // there is no reason to decrease
                             // the number of points for smaller
                             // asteroids..
 
-var astID = 0;
+
+var bulletBuffer, bulletShaderProgram;
+var bullets = [];
+var newBullLifetime = 1, bulletSpeed = 500;
 
 function init(){
     var canvas=document.getElementById("asteroids-canvas");
@@ -50,7 +56,7 @@ function init(){
     // asteroids. Eventually the player setup code should be called here
     // or at least in a similar manner.
     setupGL();
-    setupAsteroids();
+    setupNewSetOfAsteroids();
     setupPlayer();
 
     window.requestAnimationFrame(animate);
@@ -60,35 +66,20 @@ function init(){
 function onKeyDown(event) {
     var keyCode = event.keyCode;
     switch (keyCode) {
-        case 68:  //d
-            keyD = true;
-            break;
-        case 83:  //s
-            keyS = true;
-            break;
-        case 65:  //a
-            keyA = true;
-            break;
-        case 87:  //w
-            keyW = true;
-            break;
+        case 87: keyW = true; break; // w
+        case 65: keyA = true; break; // a
+        case 83: keyS = true; break; // s
+        case 68: keyD = true; break; // d 
+        case 32: tryFire(); break; // spacebar
     }
 }
 function onKeyUp(event) {
     var keyCode = event.keyCode;
     switch (keyCode) {
-        case 68:  //d
-            keyD = false;
-            break;
-        case 83:  //s
-            keyS = false;
-            break;
-        case 65: //a
-            keyA = false;
-            break;
-            case 87: //w
-            keyW = false;
-            break;
+        case 87: keyW = false; break; // w
+        case 65: keyA = false; break; // a
+        case 83: keyS = false; break; // s
+        case 68: keyD = false; break; // d
     }
 }
 
@@ -134,11 +125,12 @@ function setupGL(){
     gl.clear( gl.COLOR_BUFFER_BIT );
 
     roidBuffer = gl.createBuffer();
-    edgeRoidBuffer = gl.createBuffer();
     playerBuffer = gl.createBuffer();
+    bulletBuffer = gl.createBuffer();
 
     asteroidShaderProgram = initShaders( gl, "vertex-shader", "frag-asteroid" );
     playerShaderProgram = initShaders( gl, "vertex-shader", "frag-player" );
+    bulletShaderProgram = initShaders( gl, "vertex-shader", "frag-orange" );
 
 }
 
@@ -150,7 +142,7 @@ function setupGL(){
 // like asteroid. Technically we could increase the
 // divisions amount in order to have more circular
 // asteroids, but this could ruin the look as well.
-function setupAsteroids() {
+function setupNewSetOfAsteroids() {
 
     var size = 3;
     var speed = 90;    
@@ -248,18 +240,28 @@ function animate( now ){
     // Update all asteroid position, then render them
     updateAsteroids( now );
     drawAsteroids();
-    //updateEdgeAsteroids( now );
-    //drawEdgeAsteroids();
 
     // Below here will ideally be other update functions
     // and render functions
     updatePlayer( now );
     drawPlayer();
 
+    // Updates all the currently spawned bullets
+    updateBullets( now );
+    drawBullets();
+
     // Now that all has been updated and rendered, we update
     // the past time to now and request the next animation
     pastTime = now;
     window.requestAnimationFrame( animate );
+}
+
+function tryFire(){
+    var playDir = player.dir;
+    var bullPos = vec2(player.position[0], player.position[1]);
+    var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
+    bullets.push(newBullet);
+    //console.log(newBullet);
 }
 
 // #region UPDATE FUNCTIONS REGION
@@ -324,23 +326,6 @@ function updateAsteroids( now ){
         // them to scroll endlessly across the screen.
         var velMag = mag( vec3( currVel[0], currVel[1], 0 ) );
         var dir = vec2( currVel[0]/velMag, currVel[1]/velMag );
-        let adjustPosVal = vec2(0, 0);
-
-        // If the asteroid is moving in the positive x direction, and has
-        // a larger x value that the actual canvas size, we know we can
-        // subtract the width of the canvas from the x position to reset
-        // it back to the left side of the screen. Similar logic can be
-        // understood to get it to scroll endlessly to the left, up or
-        // down.
-        if (( center[0] > w ) && dir[0] > 0 ){ adjustPosVal[0] = -w; }
-        if (( center[0] < 0 ) && dir[0] < 0 ){ adjustPosVal[0] = w; }
-
-        if (( center[1] > h ) && dir[1] > 0 ){ adjustPosVal[1] = -h; }
-        if (( center[1] < 0 ) && dir[1] < 0 ){ adjustPosVal[1] = h; }
-
-        //center[0] += adjustPosVal[0];
-        //center[1] += adjustPosVal[1];
-
 
         // Assume to be true, but then change to false when one is in view.
         var allPointsOutOfView = true;
@@ -391,20 +376,24 @@ function updateAsteroids( now ){
 
     roids.sort( compareAsteroids );
 
+    if (roids.length == 0){
+        numOfAsteroids++;
+        setupNewSetOfAsteroids();
+    }
+
 }
 
-function updatePlayer(now){
+function updatePlayer( now ){
     // calculates the difference in time between this frame
     // and last frame.
     var timeDelta = now - pastTime;
 
     // update theta
-    if(keyA) player.theta += Math.PI/32;
-    if(keyD) player.theta += -Math.PI/32;
-    if(keyA || keyD) player.updateRotMat(player.theta);
+    if(keyA) { player.theta +=  Math.PI/32; player.updateRotMat(player.theta); }
+    if(keyD) { player.theta += -Math.PI/32; player.updateRotMat(player.theta); };
 
     // update speed
-    if(keyW && player.speed < 500) player.speed += 20;
+    if(keyW && player.speed < 300) player.speed += 20;
     else player.speed -= 20;
     if (player.speed < 0) player.speed = 0;
 
@@ -414,8 +403,72 @@ function updatePlayer(now){
         player.position[1] = Math.random() * h;
         lastJump = now;
     }
+
+
+    var center = player.position;
+    var dir = player.dir;
+
+    var adjustPosVal = vec2(0, 0);
+
+    if (( center[0] > w ) && dir[0] > 0 ){ adjustPosVal[0] = -w; }
+    if (( center[0] < 0 ) && dir[0] < 0 ){ adjustPosVal[0] = w; }
+
+    if (( center[1] > h ) && dir[1] > 0 ){ adjustPosVal[1] = -h; }
+    if (( center[1] < 0 ) && dir[1] < 0 ){ adjustPosVal[1] = h; }
+
+    center[0] += adjustPosVal[0];
+    center[1] += adjustPosVal[1];
+
     player.position[0] += timeDelta*player.speed*Math.cos(player.theta);
     player.position[1] += timeDelta*player.speed*Math.sin(player.theta);
+}
+
+function updateBullets( now ){
+    var numBull = bullets.length;
+    var bulletsToDelete = [];
+    var timeDelta = now - pastTime;
+    for (var i = 0; i < numBull; i++){
+        var currBullet = bullets[i];
+
+        for (var j = 0; j < roids.length; j++){
+            checkBulletCollision( currBullet, roids[j] );
+        }
+
+        if (currBullet.lifetime <= 0){ bulletsToDelete.push(i); continue; }
+
+        var center = currBullet.position;
+        var currVel = currBullet.velocity;
+        
+
+        var adjustPosVal = vec2(0, 0);
+        var dir = vec2( currVel[0]/bulletSpeed, currVel[1]/bulletSpeed );
+
+        if (( center[0] > w ) && dir[0] > 0 ){ adjustPosVal[0] = -w; }
+        if (( center[0] < 0 ) && dir[0] < 0 ){ adjustPosVal[0] = w; }
+
+        if (( center[1] > h ) && dir[1] > 0 ){ adjustPosVal[1] = -h; }
+        if (( center[1] < 0 ) && dir[1] < 0 ){ adjustPosVal[1] = h; }
+
+        center[0] += adjustPosVal[0];
+        center[1] += adjustPosVal[1];
+
+
+        currBullet.position[0] += currBullet.velocity[0]*timeDelta;
+        currBullet.position[1] += currBullet.velocity[1]*timeDelta;
+
+        currBullet.lifetime -= timeDelta;
+    }
+
+    // Deletes dead bullets
+    var length = bulletsToDelete.length;
+    for (var i = 0; i < length; i++){
+        bullets.splice(bulletsToDelete.pop(),1);
+        //console.log("Bullet destroyed");
+    }
+
+    bullets.sort( compareBullets );
+    // if (bullets.length > 0)
+    //     console.log(bullets);
 }
 
 // #endregion
@@ -474,26 +527,65 @@ function drawAsteroids(){
 function drawPlayer(){
 
     // Clears our buffer bit and then sets up our roid buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, playerBuffer);
-    gl.useProgram(playerShaderProgram);
+    gl.bindBuffer( gl.ARRAY_BUFFER, playerBuffer );
+    gl.useProgram( playerShaderProgram );
 
     // Sets up our shaders
-    var myPos = gl.getAttribLocation(playerShaderProgram, "myPosition");
-    gl.enableVertexAttribArray(myPos);
-    gl.vertexAttribPointer(myPos, 2, gl.FLOAT, false, 0, 0);
+    var myPos = gl.getAttribLocation( playerShaderProgram, "myPosition" );
+    gl.enableVertexAttribArray( myPos );
+    gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
 
     var playerPoints = player.calculatePlayerPoints();
     var pointsToRender = [];
     for (var i = 0; i < playerPoints.length; i++){
-        pointsToRender.push(convertCanvasPosToView(playerPoints[i][0], playerPoints[i][1]));
+        pointsToRender.push( convertCanvasPosToView( playerPoints[i][0], playerPoints[i][1] ) );
     }
 
 
     gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
     gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
+}
+
+function drawBullets(){
+    
+    gl.bindBuffer( gl.ARRAY_BUFFER, bulletBuffer );
+    gl.useProgram( bulletShaderProgram );
+
+    var myPos = gl.getAttribLocation( bulletShaderProgram, "myPosition" );
+    gl.enableVertexAttribArray( myPos );
+    gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
+
+    var pointsToRender = [];
+    for (var i = 0; i < bullets.length; i++){
+        var currBull = bullets[i];
+        var center = currBull.position;
+        var pointsToRender = [];
+
+        for (var j = 0; j < currBull.points.length; j++){
+            var currPoint = currBull.points[j];
+            pointsToRender.push( convertCanvasPosToView( currPoint[0] + center[0], currPoint[1] + center[1] ) )
+        }
+
+        gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
+        gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
+    }
 
 }
 
+// #endregion
+
+// #region COLLISIONS
+function checkBulletCollision( bullet, roid ){
+    var distToRoid = vec2(roid.position[0] - bullet.position[0], roid.position[1] - bullet.position[1]);
+    var magDist = mag( vec3(distToRoid[0], distToRoid[1], 0));
+    var dir = vec2(distToRoid[0]/magDist, distToRoid[1]/magDist);
+    var pointOnBullet = vec2( bullet.rad*dir[0] + bullet.position[0], bullet.rad*dir[1] + bullet.position[1]);
+    if (roid.isInside(pointOnBullet)){
+        roid.clicked = true;
+        bullet.lifetime = 0;
+    }
+
+}
 // #endregion
 
 // #region USEFUL FUNCTIONS REGION
@@ -609,6 +701,17 @@ function drawCirc( rad, center ){
 
     gl.drawArrays( gl.TRIANGLE_FAN, 0, count );
 
+}
+
+function generateCircPoints( rad, center, divs ){
+    var stepAmount = 2*Math.PI/divs;
+    var circleArr = [];
+    for ( var theta = 0; theta < 2*Math.PI; theta += stepAmount ){
+        var x = rad*Math.cos( theta ) + center[0];
+        var y = rad*Math.sin( theta ) + center[1];
+        circleArr.push( vec2(x,y) );
+    }
+    return circleArr;
 }
 
 // #endregion

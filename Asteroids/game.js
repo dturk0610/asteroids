@@ -10,6 +10,7 @@ var roids = [];
 var roidsToDelete = [];
 
 var player, playerBuffer, playerShaderProgram;
+var livesBuffer;
 
 var timeDelta = 0;
 var keyW, keyA, keyS, keyD;
@@ -128,6 +129,7 @@ function setupGL(){
 
     roidBuffer = gl.createBuffer();
     playerBuffer = gl.createBuffer();
+    livesBuffer = gl.createBuffer();
     bulletBuffer = gl.createBuffer();
 
     asteroidShaderProgram = initShaders( gl, "vertex-shader", "frag-asteroid" );
@@ -173,11 +175,11 @@ function setupPlayer(){
     var leftTip = vec2(-.75, -1), rightTip = vec2(2*tip[0] - leftTip[0], leftTip[1] );
     var leftPit = vec2(-.5, -.5), rightPit = vec2(2*tip[0] - leftPit[0], leftPit[1] );
     var basicPoints = [];
-    basicPoints.push(scale(playerMult, tip));
-    basicPoints.push(scale(playerMult, leftTip));
-    basicPoints.push(scale(playerMult, leftPit));
-    basicPoints.push(scale(playerMult, rightPit));
-    basicPoints.push(scale(playerMult, rightTip));
+    basicPoints.push( scale( playerMult, tip ) );
+    basicPoints.push( scale( playerMult, leftTip ) );
+    basicPoints.push( scale( playerMult, leftPit ) );
+    basicPoints.push( scale( playerMult, rightPit ) );
+    basicPoints.push( scale( playerMult, rightTip ) );
     var tempTheta = -90*Math.PI/180.0;
     var rotateToXAxisMat = mat2([Math.cos(tempTheta), Math.sin(tempTheta)], [-Math.sin(tempTheta), Math.cos(tempTheta)]); 
     var rotatedPoints = matVecArrMult(basicPoints, rotateToXAxisMat);
@@ -245,8 +247,11 @@ function animate( now ){
 
     // Below here will ideally be other update functions
     // and render functions
-    updatePlayer( now );
-    drawPlayer();
+    if (player.lives > 0){
+        updatePlayer( now );
+        drawPlayer();
+        drawLives();
+    }
 
     // Updates all the currently spawned bullets
     updateBullets( now );
@@ -392,7 +397,7 @@ function updatePlayer( now ){
     var timeDelta = now - pastTime;
 
 
-    for (var i = 0; i < 1; i ++){
+    for (var i = 0; i < roids.length; i ++){
         checkPlayerCollision( player, roids[i] );
     }
 
@@ -555,6 +560,35 @@ function drawPlayer(){
     gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
 }
 
+function drawLives(){
+    
+    var offset = 40;
+    // Clears our buffer bit and then sets up our roid buffer
+    gl.bindBuffer( gl.ARRAY_BUFFER, livesBuffer );
+    gl.useProgram( playerShaderProgram );
+
+    // Sets up our shaders
+    var myPos = gl.getAttribLocation( playerShaderProgram, "myPosition" );
+    gl.enableVertexAttribArray( myPos );
+    gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
+
+    for (var i = 0; i < player.lives; i++){
+        var psuedoPlayer = new Player();
+        psuedoPlayer = Object.assign( psuedoPlayer, player );
+        psuedoPlayer.updateRotMat( Math.PI/2 );
+        psuedoPlayer.position = vec2( offset * i + offset, h - offset );
+        var playerPoints = psuedoPlayer.calculatePlayerPoints();
+        var pointsToRender = [];
+        for (var j = 0; j < playerPoints.length; j++){
+            pointsToRender.push( convertCanvasPosToView( playerPoints[j][0], playerPoints[j][1] ) );
+        }
+
+
+        gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
+        gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
+    }
+}
+
 function drawBullets(){
     
     gl.bindBuffer( gl.ARRAY_BUFFER, bulletBuffer );
@@ -593,8 +627,50 @@ function checkPlayerCollision( character, roid ){
     var disp = vec2( roidCen[0] - charCen[0], roidCen[1] - charCen[1] );
     var magDisp = mag( vec3( disp[0], disp[1], 0 ) );
     var dir = vec2( disp[0]/magDisp, disp[1]/magDisp );
-    var midPoint = vec2( disp[0]*.5, disp[1]*.5 );
-    //var dividingAxis = vec2();
+    var midPoint = vec2( disp[0]*.5 + charCen[0], disp[1]*.5 + charCen[1] );
+    //var dividingAxis = vec2( dir[1], -dir[0] );
+
+    // This breaks the character and asteroid up into new axis, ones that have a center between the two
+    // where the new x-axis can be considered the direction between the two and the y axis the dividing
+    // axis.
+
+    var minDirChar = h*w;
+    var maxDirChar = -h*w;
+    var minDirRoid = h*w;
+    var maxDirRoid = -h*w;
+
+    var charPoints = character.calculatePlayerPoints();
+    for (var i = 0; i < charPoints.length; i++){
+        var currP = vec2( charPoints[i][0] - charCen[0], charPoints[i][1] - charCen[1] );
+        var amountOnDirAxis = dot( vec3( currP[0], currP[1] ), vec3( dir[0], dir[1] ) );
+        if (amountOnDirAxis < minDirChar) minDirChar = amountOnDirAxis;
+        if (amountOnDirAxis > maxDirChar) maxDirChar = amountOnDirAxis;
+    }
+
+    var roidPoints = roid.points;
+    for (var i = 0; i < roidPoints.length; i++){
+        var currP = vec2( roidPoints[i][0] + roidCen[0] - charCen[0], roidPoints[i][1] + roidCen[1] - charCen[1] );
+        var amountOnDirAxis = dot( vec3( currP[0], currP[1] ), vec3( dir[0], dir[1] ) );
+        if (amountOnDirAxis < minDirRoid) minDirRoid = amountOnDirAxis;
+        if (amountOnDirAxis > maxDirRoid) maxDirRoid = amountOnDirAxis;
+    }
+    /*
+    drawCirc( 10, midPoint );
+    drawCirc( 10, vec2( dir[0] * minDirChar + charCen[0], dir[1] * minDirChar + charCen[1] ) );
+    drawCirc( 10, vec2( dir[0] * maxDirChar + charCen[0], dir[1] * maxDirChar + charCen[1] ) );
+    drawCirc( 10, vec2( dir[0] * minDirRoid + charCen[0], dir[1] * minDirRoid + charCen[1] ) );
+    drawCirc( 10, vec2( dir[0] * maxDirRoid + charCen[0], dir[1] * maxDirRoid + charCen[1] ) );
+    */
+
+    // clearly not overlapping
+    if (minDirChar > maxDirRoid || minDirRoid > maxDirChar) return;
+    
+    var overlap = vec2( Math.max( minDirChar, minDirRoid ), Math.min( maxDirChar, maxDirRoid ) );
+
+
+    //console.log("minmax char: [" + minDirChar + ", " + maxDirChar + "] minmax roid: [" + minDirRoid + ", " + maxDirRoid + "]");
+    //console.log("overlap: " + overlap);
+    character.damage( h, w );
 
 }
 

@@ -1,7 +1,7 @@
 
 
 // THETA IS ASSUMED TO BE IN RADIANS OFF X AXIS
-function Player ( points, position = vec2(0, 0), speed = 0, theta = 0 ){
+function Player ( points = [], position = vec2(0, 0), speed = 0, theta = 0 ){
     this.points = points;
     this.position = position;
     this.speed = speed;
@@ -25,8 +25,8 @@ function Player ( points, position = vec2(0, 0), speed = 0, theta = 0 ){
         tempPoints = Object.assign(tempPoints, this.points);
         var rotPoints = matVecArrMult(tempPoints, this.rotMat);
         for (var i = 0; i < rotPoints.length; i++){
-            rotPoints[i][0] += position[0];
-            rotPoints[i][1] += position[1];
+            rotPoints[i][0] += this.position[0];
+            rotPoints[i][1] += this.position[1];
         }
         return rotPoints;
     };
@@ -38,6 +38,7 @@ function Player ( points, position = vec2(0, 0), speed = 0, theta = 0 ){
 
     this.damage = function( h, w ){
         this.lives--;
+        if (this.lives < 1) return;
         this.hyperSpaceJump( h, w );
     }
 

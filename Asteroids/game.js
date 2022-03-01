@@ -25,6 +25,8 @@ var bulletBuffer, bulletShaderProgram;
 var bullets = [];
 var newBullLifetime = 1, bulletSpeed = 500;
 
+var mouseCoords = vec2(0, 0);
+
 function init(){
     var canvas=document.getElementById("asteroids-canvas");
     gl=WebGLUtils.setupWebGL(canvas);
@@ -95,7 +97,7 @@ function tryClickAsteroid(canvas, event) {
     let rect = canvas.getBoundingClientRect();
     let x = event.clientX - rect.left;
     let y = rect.height - (event.clientY - rect.top);
-
+    mouseCoords = vec2(x, y);
     // Now we loop through all asteroids saved and see if the
     // clicked location is within the asteroids. There is a
     // sort function in place that will eventually allow us
@@ -584,67 +586,15 @@ function drawBullets(){
 // #region COLLISIONS
 
 function checkPlayerCollision( character, roid ){
-    // Find the closest point in the player's points to the asteroid
-    var charCent = character.position;
+    //if (collide) character.damage( h, w );
+
     var roidCen = roid.position;
-    var points = character.points;
-    var closestInd1 = 0;
-    var closestInd2 = 1;
-    var closestDist = w*h;
-    for (var i = 0; i < points.length - 1; i++){
-        var p1 = vec2( points[i][0] + charCent[0], points[i][1] + charCent[1] );
-        var p2 = vec2( points[i + 1][0] + charCent[0], points[i + 1][1] + charCent[1] );
-        var side = vec2( p2[0] - p1[0], p2[1] - p1[1] );
-        var magSide = mag( vec3( side[0], side[1], 0 ) );
-        var dirSide = vec2( side[0]/magSide, side[1]/magSide );
-
-        var roidCenOnPoint = vec2( roidCen[0] - p1[0], roidCen[1] - p1[1] );
-        var amountOnSide = dot( vec3(roidCenOnPoint[0], roidCenOnPoint[1], 0), vec3(dirSide[0], dirSide[1], 0) );
-
-        // Closest Point on this side is the start point
-        if (amountOnSide < 0){
-            var distFromPoint = mag( vec3( roidCenOnPoint[0], roidCenOnPoint[1], 0 ) );
-            if (distFromPoint < closestDist){
-                closestInd1 = i;
-                closestInd2 = i + 1;
-                closestDist = distFromPoint;
-                continue;
-            }
-        }else if( amountOnSide > magSide){
-            var distFromPoint = mag( vec3( p2[0] - roidCen[0], p2[1] - roidCen[1], 0 ) );
-            if (distFromPoint < closestDist){
-                closestInd1 = i;
-                closestInd2 = i + 1;
-                closestDist = distFromPoint;
-                continue;
-            }
-        }
-
-        var amountOnSideAsVec = vec2( dirSide[0]*amountOnSide, dirSide[1]*amountOnSide );
-        var perpendicularToSideVec = vec2( roidCen[0] - amountOnSideAsVec[0], roidCen[1] - amountOnSideAsVec[1]);
-        var distOffSide = mag( vec3(perpendicularToSideVec[0], perpendicularToSideVec[1], 0) );
-        if ( distOffSide < closestDist ){
-            closestInd1 = i;
-            closestInd2 = i + 1;
-            closestDist = distOffSide;
-        }
-        drawCirc(10, vec2(amountOnSideAsVec[0] + p1[0], amountOnSideAsVec[1] + p1[1]));
-    }
-
-    var p1 = vec2( points[closestInd1][0] + charCent[0], points[closestInd1][1] + charCent[1] );
-    var p2 = vec2( points[closestInd2][0] + charCent[0], points[closestInd2][1] + charCent[1] );
-    var side = vec2( p2[0] - p1[0], p2[1] - p1[1] );
-    var magSide = mag( vec3( side[0], side[1], 0 ) );
-    var dirSide = vec2( side[0]/magSide, side[1]/magSide );
-    var roidCenOnPoint = vec2( roidCen[0] - p1[0], roidCen[1] - p1[1] );
-    var amountOnSide = dot( vec3( roidCenOnPoint[0], roidCenOnPoint[1], 0 ), vec3( dirSide[0], dirSide[1], 0 ) );
-    var amountOnSideAsVec = vec2( dirSide[0]*amountOnSide, dirSide[1]*amountOnSide );
-    var amountOnSideCenteredOnOrigin = vec2(amountOnSideAsVec[0] + p1[0], amountOnSideAsVec[1] + p1[1]);
-
-    //console.log(amountOnSideCenteredOnOrigin);
-    // if ( roid.isInside( amountOnSideCenteredOnOrigin ) ){
-    //     character.damage( h, w );
-    // }
+    var charCen = character.position;
+    var disp = vec2( roidCen[0] - charCen[0], roidCen[1] - charCen[1] );
+    var magDisp = mag( vec3( disp[0], disp[1], 0 ) );
+    var dir = vec2( disp[0]/magDisp, disp[1]/magDisp );
+    var midPoint = vec2( disp[0]*.5, disp[1]*.5 );
+    //var dividingAxis = vec2();
 
 }
 

@@ -165,6 +165,25 @@ function setupNewSetOfAsteroids() {
 
 }
 
+function setupPlayer(){
+    var playerMult = 15.0;
+    var tip = vec2(0.0,1.0);
+    var leftTip = vec2(-.75, -1), rightTip = vec2(2*tip[0] - leftTip[0], leftTip[1] );
+    var leftPit = vec2(-.5, -.5), rightPit = vec2(2*tip[0] - leftPit[0], leftPit[1] );
+    var basicPoints = [];
+    basicPoints.push(scale(playerMult, tip));
+    basicPoints.push(scale(playerMult, leftTip));
+    basicPoints.push(scale(playerMult, leftPit));
+    basicPoints.push(scale(playerMult, rightPit));
+    basicPoints.push(scale(playerMult, rightTip));
+    var tempTheta = -90*Math.PI/180.0;
+    var rotateToXAxisMat = mat2([Math.cos(tempTheta), Math.sin(tempTheta)], [-Math.sin(tempTheta), Math.cos(tempTheta)]); 
+    var rotatedPoints = matVecArrMult(basicPoints, rotateToXAxisMat);
+
+    player = new Player(rotatedPoints, vec2(w*.5,h*.5), 0, 0);
+
+}
+
 // Creates asteroids
 function makeAsteroid(size, vel, center){
 
@@ -205,25 +224,6 @@ function makeAsteroid(size, vel, center){
     // console.log(`currRoid: ${currRoid}`);
 }
 
-function setupPlayer(){
-    var playerMult = 15.0;
-    var tip = vec2(0.0,1.0);
-    var leftTip = vec2(-.75, -1), rightTip = vec2(2*tip[0] - leftTip[0], leftTip[1] );
-    var leftPit = vec2(-.5, -.5), rightPit = vec2(2*tip[0] - leftPit[0], leftPit[1] );
-    var basicPoints = [];
-    basicPoints.push(scale(playerMult, tip));
-    basicPoints.push(scale(playerMult, leftTip));
-    basicPoints.push(scale(playerMult, leftPit));
-    basicPoints.push(scale(playerMult, rightPit));
-    basicPoints.push(scale(playerMult, rightTip));
-    var tempTheta = -90*Math.PI/180.0;
-    var rotateToXAxisMat = mat2([Math.cos(tempTheta), Math.sin(tempTheta)], [-Math.sin(tempTheta), Math.cos(tempTheta)]); 
-    var rotatedPoints = matVecArrMult(basicPoints, rotateToXAxisMat);
-
-    player = new Player(rotatedPoints, vec2(w*.5,h*.5), 0, 0);
-
-}
-
 // #endregion
 
 // The animate function is being used to update the time
@@ -250,8 +250,6 @@ function animate( now ){
     updateBullets( now );
     drawBullets();
 
-    // bloom();
-
     // Now that all has been updated and rendered, we update
     // the past time to now and request the next animation
     pastTime = now;
@@ -265,32 +263,6 @@ function tryFire(){
     bullets.push(newBullet);
     //console.log(newBullet);
 }
-
-// function bloom(){
-//     // set up floating point framebuffer to render scene to
-//     var hdrFBO;
-//     gl.GenFramebuffers(1, hdrFBO);
-//     gl.BindFramebuffer(gl.FRAMEBUFFER, hdrFBO);
-//     var colorBuffers = [];
-//     gl.GenTextures(2, colorBuffers);
-//     for (var i = 0; i < 2; i++)
-//     {
-//         gl.BindTexture(gl.TEXTURE_2D, colorBuffers[i]);
-//         gl.TexImage2D(
-//             gl.TEXTURE_2D, 0, gl.RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, gl.RGBA, gl.FLOAT, NULL
-//         );
-//         gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, GL_LINEAR);
-//         gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, GL_LINEAR);
-//         gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//         gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//         // attach texture to framebuffer
-//         gl.FramebufferTexture2D(
-//             gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, colorBuffers[i], 0
-//         );
-//     } 
-//     var attachments = [ gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1 ];
-//     gl.DrawBuffers(2, attachments);
-// }
 
 // #region UPDATE FUNCTIONS REGION
 
@@ -416,6 +388,13 @@ function updatePlayer( now ){
     // calculates the difference in time between this frame
     // and last frame.
     var timeDelta = now - pastTime;
+
+
+    for (var i = 0; i < 1; i ++){
+        checkPlayerCollision( player, roids[i] );
+    }
+
+
 
     // update theta
     if(keyA) { player.theta +=  Math.PI/32; player.updateRotMat(player.theta); }
@@ -603,6 +582,72 @@ function drawBullets(){
 // #endregion
 
 // #region COLLISIONS
+
+function checkPlayerCollision( character, roid ){
+    // Find the closest point in the player's points to the asteroid
+    var charCent = character.position;
+    var roidCen = roid.position;
+    var points = character.points;
+    var closestInd1 = 0;
+    var closestInd2 = 1;
+    var closestDist = w*h;
+    for (var i = 0; i < points.length - 1; i++){
+        var p1 = vec2( points[i][0] + charCent[0], points[i][1] + charCent[1] );
+        var p2 = vec2( points[i + 1][0] + charCent[0], points[i + 1][1] + charCent[1] );
+        var side = vec2( p2[0] - p1[0], p2[1] - p1[1] );
+        var magSide = mag( vec3( side[0], side[1], 0 ) );
+        var dirSide = vec2( side[0]/magSide, side[1]/magSide );
+
+        var roidCenOnPoint = vec2( roidCen[0] - p1[0], roidCen[1] - p1[1] );
+        var amountOnSide = dot( vec3(roidCenOnPoint[0], roidCenOnPoint[1], 0), vec3(dirSide[0], dirSide[1], 0) );
+
+        // Closest Point on this side is the start point
+        if (amountOnSide < 0){
+            var distFromPoint = mag( vec3( roidCenOnPoint[0], roidCenOnPoint[1], 0 ) );
+            if (distFromPoint < closestDist){
+                closestInd1 = i;
+                closestInd2 = i + 1;
+                closestDist = distFromPoint;
+                continue;
+            }
+        }else if( amountOnSide > magSide){
+            var distFromPoint = mag( vec3( p2[0] - roidCen[0], p2[1] - roidCen[1], 0 ) );
+            if (distFromPoint < closestDist){
+                closestInd1 = i;
+                closestInd2 = i + 1;
+                closestDist = distFromPoint;
+                continue;
+            }
+        }
+
+        var amountOnSideAsVec = vec2( dirSide[0]*amountOnSide, dirSide[1]*amountOnSide );
+        var perpendicularToSideVec = vec2( roidCen[0] - amountOnSideAsVec[0], roidCen[1] - amountOnSideAsVec[1]);
+        var distOffSide = mag( vec3(perpendicularToSideVec[0], perpendicularToSideVec[1], 0) );
+        if ( distOffSide < closestDist ){
+            closestInd1 = i;
+            closestInd2 = i + 1;
+            closestDist = distOffSide;
+        }
+        drawCirc(10, vec2(amountOnSideAsVec[0] + p1[0], amountOnSideAsVec[1] + p1[1]));
+    }
+
+    var p1 = vec2( points[closestInd1][0] + charCent[0], points[closestInd1][1] + charCent[1] );
+    var p2 = vec2( points[closestInd2][0] + charCent[0], points[closestInd2][1] + charCent[1] );
+    var side = vec2( p2[0] - p1[0], p2[1] - p1[1] );
+    var magSide = mag( vec3( side[0], side[1], 0 ) );
+    var dirSide = vec2( side[0]/magSide, side[1]/magSide );
+    var roidCenOnPoint = vec2( roidCen[0] - p1[0], roidCen[1] - p1[1] );
+    var amountOnSide = dot( vec3( roidCenOnPoint[0], roidCenOnPoint[1], 0 ), vec3( dirSide[0], dirSide[1], 0 ) );
+    var amountOnSideAsVec = vec2( dirSide[0]*amountOnSide, dirSide[1]*amountOnSide );
+    var amountOnSideCenteredOnOrigin = vec2(amountOnSideAsVec[0] + p1[0], amountOnSideAsVec[1] + p1[1]);
+
+    //console.log(amountOnSideCenteredOnOrigin);
+    // if ( roid.isInside( amountOnSideCenteredOnOrigin ) ){
+    //     character.damage( h, w );
+    // }
+
+}
+
 function checkBulletCollision( bullet, roid ){
     var distToRoid = vec2(roid.position[0] - bullet.position[0], roid.position[1] - bullet.position[1]);
     var magDist = mag( vec3(distToRoid[0], distToRoid[1], 0));
@@ -614,6 +659,7 @@ function checkBulletCollision( bullet, roid ){
     }
 
 }
+
 // #endregion
 
 // #region USEFUL FUNCTIONS REGION

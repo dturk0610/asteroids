@@ -36,4 +36,9 @@ function Player ( points, position = vec2(0, 0), speed = 0, theta = 0 ){
         this.position[1] = Math.random() * h;
     }
 
+    this.damage = function( h, w ){
+        this.lives--;
+        this.hyperSpaceJump( h, w );
+    }
+
 }

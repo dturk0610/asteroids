@@ -13,7 +13,7 @@ var player, playerBuffer, playerShaderProgram;
 var livesBuffer;
 
 var timeDelta = 0;
-var keyW, keyA, keyS, keyD;
+var keyW, keyA, keyS, keyD, spacebar;
 
 var astID = 0;
 var numOfAsteroids = 3, maxSpawnAsteroids = 10;
@@ -25,6 +25,7 @@ var divsForAsteroids = 12;  // there is no reason to decrease
 var bulletBuffer, bulletShaderProgram;
 var bullets = [];
 var newBullLifetime = 1, bulletSpeed = 500;
+var nextBulletTime = 0, origBulletTime = .15;
 
 function init(){
     var canvas=document.getElementById("asteroids-canvas");
@@ -71,7 +72,7 @@ function onKeyDown(event) {
         case 65: keyA = true; break; // a
         case 83: keyS = true; break; // s
         case 68: keyD = true; break; // d 
-        case 32: tryFire(); break; // spacebar
+        case 32: spacebar = true; break; // spacebar
     }
 }
 function onKeyUp(event) {
@@ -81,6 +82,7 @@ function onKeyUp(event) {
         case 65: keyA = false; break; // a
         case 83: keyS = false; break; // s
         case 68: keyD = false; break; // d
+        case 32: spacebar = false; break; // spacebar
     }
 }
 
@@ -259,14 +261,15 @@ function animate( now ){
     window.requestAnimationFrame( animate );
 }
 
-function tryFire(){
-    if (player.lives > 0){
+function tryFire( now ){
+    if (player.lives > 0 && nextBulletTime < 0){
     var playDir = player.dir;
     var bullPos = vec2(player.position[0], player.position[1]);
     var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
     bullets.push(newBullet);
+    nextBulletTime = origBulletTime;
     }
-    //console.log(newBullet);
+    nextBulletTime -= (now - pastTime);
 }
 
 // #region UPDATE FUNCTIONS REGION
@@ -402,8 +405,8 @@ function updatePlayer( now ){
 
 
     // update theta
-    if(keyA) { player.theta +=  Math.PI/32; player.updateRotMat(player.theta); }
-    if(keyD) { player.theta += -Math.PI/32; player.updateRotMat(player.theta); };
+    if(keyA) { player.theta +=  Math.PI/64; player.updateRotMat(player.theta); }
+    if(keyD) { player.theta += -Math.PI/64; player.updateRotMat(player.theta); };
 
     // update speed
     if(keyW && player.speed < 300) player.speed += 20;
@@ -414,6 +417,10 @@ function updatePlayer( now ){
     if(keyS && now-lastJump > 0.3){
         player.hyperSpaceJump( h, w )
         lastJump = now;
+    }
+
+    if (spacebar){
+        tryFire( now );
     }
 
 

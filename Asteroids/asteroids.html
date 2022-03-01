@@ -19,10 +19,10 @@
         </script>
 
         <script id="frag-asteroid" type="x-shader/x-fragment">
-            uniform bool clicked;
+            uniform bool destroyed;
 
             void main(){
-                if (!clicked)
+                if (!destroyed)
                     gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
                 else
                     gl_FragColor = vec4( 0.0, 1.0, 1.0, 1.0 );

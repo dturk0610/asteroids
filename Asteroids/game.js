@@ -26,8 +26,6 @@ var bulletBuffer, bulletShaderProgram;
 var bullets = [];
 var newBullLifetime = 1, bulletSpeed = 500;
 
-var mouseCoords = vec2(0, 0);
-
 function init(){
     var canvas=document.getElementById("asteroids-canvas");
     gl=WebGLUtils.setupWebGL(canvas);
@@ -98,7 +96,7 @@ function tryClickAsteroid(canvas, event) {
     let rect = canvas.getBoundingClientRect();
     let x = event.clientX - rect.left;
     let y = rect.height - (event.clientY - rect.top);
-    mouseCoords = vec2(x, y);
+
     // Now we loop through all asteroids saved and see if the
     // clicked location is within the asteroids. There is a
     // sort function in place that will eventually allow us
@@ -106,12 +104,10 @@ function tryClickAsteroid(canvas, event) {
     // (possibly making a binary search functionality)
     for (var i = 0; i < roids.length; i++){
         if (roids[i].isInside(vec2(x,y))){
-            roids[i].clicked = true;// A reference for how this
-                                    // function works will be
-                                    // pasted at the bottom of
-                                    // this script
-
-            //console.log(`clicked asteroid: ${roids[i]}`);
+            roids[i].destroyed = true;// A reference for how this
+                                      // function works will be
+                                      // pasted at the bottom of
+                                      // this script
         }
     } 
 }
@@ -308,7 +304,7 @@ function updateAsteroids( now ){
         var center = currRoid.position;
 
         // Collision goes here!
-        if (currRoid.clicked == true && currRoid.size > 1){
+        if (currRoid.destroyed == true && currRoid.size > 1){
             var vel1 = rotateVelocity(currVel, Math.PI/8.0 + Math.random()*Math.PI/16.0 );
             var vel2 = rotateVelocity(currVel, -Math.PI/8.0 + Math.random()*Math.PI/16.0 );
             vel1 = vec2(vel1[0]*1.5,vel1[1]*1.5);
@@ -322,7 +318,7 @@ function updateAsteroids( now ){
                     roidsToDelete.push(j);
                 }
             }
-        } else if (currRoid.clicked == true && currRoid.size == 1) {
+        } else if (currRoid.destroyed == true && currRoid.size == 1) {
             roidsToDelete.push(i);
         } else {
             center[0] += currVel[0]*timeDelta;
@@ -359,7 +355,7 @@ function updateAsteroids( now ){
             Object.assign(edgeRoid, currRoid);
             edgeRoid.position = vec2(currRoid.position[0], currRoid.position[1]);
             edgeRoid.goingOffScreen = false;
-            edgeRoid.clicked = false;
+            edgeRoid.destroyed = false;
             edgeRoid.position[0] += outsidePointVal[0];
             edgeRoid.position[1] += outsidePointVal[1];
             roids.push(edgeRoid);
@@ -533,8 +529,8 @@ function drawAsteroids(){
         // asteroids. This whole idea with the click and uniform on the
         // fragment shader and be used to our advantage in order to have
         // cool effects on asteroids that are hit.
-        var clickUniform = gl.getUniformLocation( asteroidShaderProgram, "clicked" );
-        gl.uniform1i( clickUniform, currRoid.clicked );
+        var clickUniform = gl.getUniformLocation( asteroidShaderProgram, "destroyed" );
+        gl.uniform1i( clickUniform, currRoid.destroyed );
 
         gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
     }
@@ -682,7 +678,7 @@ function checkBulletCollision( bullet, roid ){
     var dir = vec2(distToRoid[0]/magDist, distToRoid[1]/magDist);
     var pointOnBullet = vec2( bullet.rad*dir[0] + bullet.position[0], bullet.rad*dir[1] + bullet.position[1]);
     if (roid.isInside(pointOnBullet)){
-        roid.clicked = true;
+        roid.destroyed = true;
         bullet.lifetime = 0;
     }
 

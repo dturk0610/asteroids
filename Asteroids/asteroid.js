@@ -6,7 +6,7 @@ function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity
     this.velocity = velocity;
     this.area = area;
     this.id = 0;
-    this.clicked = false;
+    this.destroyed = false;
     this.goingOffScreen = false;
     this.momentum = mag(vec3(velocity[0], velocity[1], 0)) * area;
     this.size = size; // Added size

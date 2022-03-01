@@ -300,8 +300,8 @@ function updateAsteroids( now ){
 
         // Collision goes here!
         if (currRoid.clicked == true && currRoid.size > 1){
-            var vel1 = rotateVelocity(currVel, Math.PI/8.0);
-            var vel2 = rotateVelocity(currVel, -Math.PI/8.0);
+            var vel1 = rotateVelocity(currVel, Math.PI/8.0 + Math.random()*Math.PI/16.0 );
+            var vel2 = rotateVelocity(currVel, -Math.PI/8.0 + Math.random()*Math.PI/16.0 );
             vel1 = vec2(vel1[0]*1.5,vel1[1]*1.5);
             vel2 = vec2(vel2[0]*1.5,vel2[1]*1.5);
             var newRoid1 = makeAsteroid( currRoid.size-1, vel1, vec2( center[0], center[1] ) );

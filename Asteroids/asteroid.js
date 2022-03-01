@@ -1,16 +1,4 @@
 
-/* sample object
-function Shape(x, y) {
-    var that= this;
-
-    this.x= x;
-    this.y= y;
-
-    this.toString= function() {
-        return 'Shape at '+that.x+', '+that.y;
-    };
-}*/
-
 function Asteroid( points = [], numPoints = 0, position = vec2( 0, 0 ), velocity = vec2( 0, 0 ), area = 0, size = 3 ) { // Added size
     this.points = points;
     this.numPoints = numPoints;

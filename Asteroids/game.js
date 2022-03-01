@@ -250,6 +250,8 @@ function animate( now ){
     updateBullets( now );
     drawBullets();
 
+    // bloom();
+
     // Now that all has been updated and rendered, we update
     // the past time to now and request the next animation
     pastTime = now;
@@ -263,6 +265,32 @@ function tryFire(){
     bullets.push(newBullet);
     //console.log(newBullet);
 }
+
+// function bloom(){
+//     // set up floating point framebuffer to render scene to
+//     var hdrFBO;
+//     gl.GenFramebuffers(1, hdrFBO);
+//     gl.BindFramebuffer(gl.FRAMEBUFFER, hdrFBO);
+//     var colorBuffers = [];
+//     gl.GenTextures(2, colorBuffers);
+//     for (var i = 0; i < 2; i++)
+//     {
+//         gl.BindTexture(gl.TEXTURE_2D, colorBuffers[i]);
+//         gl.TexImage2D(
+//             gl.TEXTURE_2D, 0, gl.RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, gl.RGBA, gl.FLOAT, NULL
+//         );
+//         gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, GL_LINEAR);
+//         gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, GL_LINEAR);
+//         gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//         gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//         // attach texture to framebuffer
+//         gl.FramebufferTexture2D(
+//             gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, colorBuffers[i], 0
+//         );
+//     } 
+//     var attachments = [ gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1 ];
+//     gl.DrawBuffers(2, attachments);
+// }
 
 // #region UPDATE FUNCTIONS REGION
 
@@ -400,8 +428,7 @@ function updatePlayer( now ){
 
     // move player
     if(keyS && now-lastJump > 0.3){
-        player.position[0] = Math.random() * w;
-        player.position[1] = Math.random() * h;
+        player.hyperSpaceJump( h, w )
         lastJump = now;
     }
 

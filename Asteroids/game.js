@@ -264,10 +264,12 @@ function animate( now ){
 }
 
 function tryFire(){
+    if (player.lives > 0){
     var playDir = player.dir;
     var bullPos = vec2(player.position[0], player.position[1]);
     var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
     bullets.push(newBullet);
+    }
     //console.log(newBullet);
 }
 

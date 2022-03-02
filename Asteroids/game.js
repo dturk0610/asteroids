@@ -58,8 +58,8 @@ function init(){
     // asteroids. Eventually the player setup code should be called here
     // or at least in a similar manner.
     setupGL();
-    setupNewSetOfAsteroids();
     setupPlayer();
+    setupNewSetOfAsteroids();
 
     window.requestAnimationFrame(animate);
 }
@@ -136,37 +136,6 @@ function setupGL(){
 
 }
 
-// This setup function is a little bit more complicated
-// we first generate a collection of asteroids. Every
-// asteroid has randomized values for their velocity,
-// start position and for each point around the asteroid
-// a randomized radius which gives us the more asteroid
-// like asteroid. Technically we could increase the
-// divisions amount in order to have more circular
-// asteroids, but this could ruin the look as well.
-function setupNewSetOfAsteroids() {
-
-    var size = 3;
-    var speed = 90;    
-
-    // Uses the above argument to generate that number of asteroids
-    // to start with. This uses a lot of Math.random in order to ensure
-    // a fun always-changing experience for the player. The center, or
-    // position the asteroid is on the canvas is random in both directions,
-    // same with the velocity. 
-    for (var asteroidAmount = 0; asteroidAmount < numOfAsteroids; asteroidAmount++) {
-        
-        // This speed value was trial-and-error arbitrarily set. There
-        // was nothing special about this speed other than it looked okay
-        // during initial testing.
-        var vel = vec2( Math.random() * 2.0*speed - speed, Math.random() * 2.0*speed - speed );
-        var center = vec2( Math.random() * w, Math.random() * h );
-        var newRoid = makeAsteroid(size, vel, center);
-        roids.push(newRoid);
-    }
-
-}
-
 function setupPlayer(){
     var playerMult = 15.0;
     var tip = vec2(0.0,1.0);
@@ -183,6 +152,49 @@ function setupPlayer(){
     var rotatedPoints = matVecArrMult(basicPoints, rotateToXAxisMat);
 
     player = new Player(rotatedPoints, vec2(w*.5,h*.5), 0, 0);
+
+}
+
+// This setup function is a little bit more complicated
+// we first generate a collection of asteroids. Every
+// asteroid has randomized values for their velocity,
+// start position and for each point around the asteroid
+// a randomized radius which gives us the more asteroid
+// like asteroid. Technically we could increase the
+// divisions amount in order to have more circular
+// asteroids, but this could ruin the look as well.
+function setupNewSetOfAsteroids() {
+
+    var size = 3;
+    var speed = 90;    
+    var pushAwayFromPlayerAmount = 200;
+
+    // Uses the above argument to generate that number of asteroids
+    // to start with. This uses a lot of Math.random in order to ensure
+    // a fun always-changing experience for the player. The center, or
+    // position the asteroid is on the canvas is random in both directions,
+    // same with the velocity. 
+    for (var asteroidAmount = 0; asteroidAmount < numOfAsteroids; asteroidAmount++) {
+        
+        // This speed value was trial-and-error arbitrarily set. There
+        // was nothing special about this speed other than it looked okay
+        // during initial testing.
+        var vel = vec2( Math.random() * 2.0*speed - speed, Math.random() * 2.0*speed - speed );
+        var center = vec2( Math.random() * w, Math.random() * h );
+        var newRoid = makeAsteroid(size, vel, center);
+        var distFromPlayer = vec2(newRoid.position[0] - player.position[0], newRoid.position[1] - player.position[1])
+        var magDist = mag( vec3( distFromPlayer ) );
+
+        // this protects the player from getting destroyed by an asteroid when the roids
+        // are first spawned
+        if (magDist < pushAwayFromPlayerAmount){
+        var dirToPush = vec2( distFromPlayer[0]/magDist, distFromPlayer[1]/magDist );
+            newRoid.position[0] += dirToPush[0]*pushAwayFromPlayerAmount;
+            newRoid.position[1] += dirToPush[1]*pushAwayFromPlayerAmount;
+        }
+
+        roids.push(newRoid);
+    }
 
 }
 
@@ -213,8 +225,8 @@ function makeAsteroid(size, vel, center){
     for (var i = 1; i < points.length; i++) {
         var currPt = points[i];
         var prevPt = points[i - 1];
-        var side1 = vec3( prevPt[0], prevPt[1], 0 );
-        var side2 = vec3( currPt[0], currPt[1], 0 );
+        var side1 = vec3( prevPt );
+        var side2 = vec3( currPt );
         var crossProd = cross( side1, side2 );
         area += mag( crossProd ) * .5;
     }
@@ -332,7 +344,7 @@ function updateAsteroids( now ){
         // vector math as well as understanding the desired
         // movement effect of the asteroids in order to get
         // them to scroll endlessly across the screen.
-        var velMag = mag( vec3( currVel[0], currVel[1], 0 ) );
+        var velMag = mag( vec3( currVel ) );
         var dir = vec2( currVel[0]/velMag, currVel[1]/velMag );
 
         // Assume to be true, but then change to false when one is in view.
@@ -352,7 +364,7 @@ function updateAsteroids( now ){
             allPointsOutOfView &= offScreen;
         }
 
-        if (mag(vec3(outsidePointVal[0], outsidePointVal[1], 0)) > 1 && !currRoid.goingOffScreen){
+        if (mag(vec3( outsidePointVal )) > 1 && !currRoid.goingOffScreen){
             currRoid.goingOffScreen = true;
             var edgeRoid = new Asteroid();
             Object.assign(edgeRoid, currRoid);
@@ -630,7 +642,7 @@ function checkPlayerCollision( character, roid ){
     var roidCen = roid.position;
     var charCen = character.position;
     var disp = vec2( roidCen[0] - charCen[0], roidCen[1] - charCen[1] );
-    var magDisp = mag( vec3( disp[0], disp[1], 0 ) );
+    var magDisp = mag( vec3( disp ) );
     var dir = vec2( disp[0]/magDisp, disp[1]/magDisp );
     var midPoint = vec2( disp[0]*.5 + charCen[0], disp[1]*.5 + charCen[1] );
     //var dividingAxis = vec2( dir[1], -dir[0] );
@@ -647,7 +659,7 @@ function checkPlayerCollision( character, roid ){
     var charPoints = character.calculatePlayerPoints();
     for (var i = 0; i < charPoints.length; i++){
         var currP = vec2( charPoints[i][0] - charCen[0], charPoints[i][1] - charCen[1] );
-        var amountOnDirAxis = dot( vec3( currP[0], currP[1] ), vec3( dir[0], dir[1] ) );
+        var amountOnDirAxis = dot( vec3( currP ), vec3( dir ) );
         if (amountOnDirAxis < minDirChar) minDirChar = amountOnDirAxis;
         if (amountOnDirAxis > maxDirChar) maxDirChar = amountOnDirAxis;
     }
@@ -655,7 +667,7 @@ function checkPlayerCollision( character, roid ){
     var roidPoints = roid.points;
     for (var i = 0; i < roidPoints.length; i++){
         var currP = vec2( roidPoints[i][0] + roidCen[0] - charCen[0], roidPoints[i][1] + roidCen[1] - charCen[1] );
-        var amountOnDirAxis = dot( vec3( currP[0], currP[1] ), vec3( dir[0], dir[1] ) );
+        var amountOnDirAxis = dot( vec3( currP ), vec3( dir ) );
         if (amountOnDirAxis < minDirRoid) minDirRoid = amountOnDirAxis;
         if (amountOnDirAxis > maxDirRoid) maxDirRoid = amountOnDirAxis;
     }
@@ -681,7 +693,7 @@ function checkPlayerCollision( character, roid ){
 
 function checkBulletCollision( bullet, roid ){
     var distToRoid = vec2(roid.position[0] - bullet.position[0], roid.position[1] - bullet.position[1]);
-    var magDist = mag( vec3(distToRoid[0], distToRoid[1], 0));
+    var magDist = mag( vec3( distToRoid ) );
     var dir = vec2(distToRoid[0]/magDist, distToRoid[1]/magDist);
     var pointOnBullet = vec2( bullet.rad*dir[0] + bullet.position[0], bullet.rad*dir[1] + bullet.position[1]);
     if (roid.isInside(pointOnBullet)){

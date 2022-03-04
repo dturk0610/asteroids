@@ -27,10 +27,16 @@ var bullets = [];
 var newBullLifetime = 1, bulletSpeed = 500;
 var nextBulletTime = 0, origBulletTime = .15;
 
+var context; // Audio stuff
+var bufferLoader;
+var bufferList = [];
+
 function init(){
     var canvas=document.getElementById("asteroids-canvas");
     gl=WebGLUtils.setupWebGL(canvas);
     if (!gl) { alert( "WebGL is not available" ); }
+
+    //initAudio();
 
     //canvas.width = window.innerWidth - 32;
     //canvas.height = window.innerHeight - 32;
@@ -64,6 +70,20 @@ function init(){
     window.requestAnimationFrame(animate);
 }
 
+function initAudio() {
+    // Try to open audio
+    try {
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        context = new AudioContext();
+    }
+    catch(e) {
+        alert('Web Audio API is not supported in this browser');
+    }
+
+    // Get sound file
+    bufferLoader = new BufferLoader(context, ['https://soundbible.com/ie_shot_gun-luminalace-770179786.wav']);
+    bufferLoader.load();
+}
 
 function onKeyDown(event) {
     var keyCode = event.keyCode;
@@ -280,8 +300,16 @@ function tryFire( now ){
     var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
     bullets.push(newBullet);
     nextBulletTime = origBulletTime;
+    //playSound();
     }
     nextBulletTime -= (now - pastTime);
+}
+
+function playSound(bufferList) {
+    var source = context.createBufferSource();
+    source.buffer = bufferList[0];
+    source.connect(context.destination);
+    source.start(0);
 }
 
 // #region UPDATE FUNCTIONS REGION

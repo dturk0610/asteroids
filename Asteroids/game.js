@@ -70,21 +70,6 @@ function init(){
     window.requestAnimationFrame(animate);
 }
 
-function initAudio() {
-    // Try to open audio
-    try {
-        window.AudioContext = window.AudioContext || window.webkitAudioContext;
-        context = new AudioContext();
-    }
-    catch(e) {
-        alert('Web Audio API is not supported in this browser');
-    }
-
-    // Get sound file
-    bufferLoader = new BufferLoader(context, ['https://soundbible.com/ie_shot_gun-luminalace-770179786.wav']);
-    bufferLoader.load();
-}
-
 function onKeyDown(event) {
     var keyCode = event.keyCode;
     switch (keyCode) {
@@ -295,21 +280,20 @@ function animate( now ){
 
 function tryFire( now ){
     if (player.lives > 0 && nextBulletTime < 0){
-    var playDir = player.dir;
-    var bullPos = vec2(player.position[0], player.position[1]);
-    var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
-    bullets.push(newBullet);
-    nextBulletTime = origBulletTime;
+
+        var playDir = player.dir;
+        var bullPos = vec2(player.position[0], player.position[1]);
+        var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
+        bullets.push(newBullet);
+        nextBulletTime = origBulletTime;
+        const shootAudio = document.getElementById("shootSound");
+        const newAudio = shootAudio.cloneNode()
+        newAudio.play()
+
+
     //playSound();
     }
     nextBulletTime -= (now - pastTime);
-}
-
-function playSound(bufferList) {
-    var source = context.createBufferSource();
-    source.buffer = bufferList[0];
-    source.connect(context.destination);
-    source.start(0);
 }
 
 // #region UPDATE FUNCTIONS REGION
@@ -348,6 +332,7 @@ function updateAsteroids( now ){
 
         // Collision goes here!
         if (currRoid.destroyed == true && currRoid.size > 1){
+            
             var vel1 = rotateVelocity(currVel, Math.PI/8.0 + Math.random()*Math.PI/16.0 );
             var vel2 = rotateVelocity(currVel, -Math.PI/8.0 + Math.random()*Math.PI/16.0 );
             vel1 = vec2(vel1[0]*1.5,vel1[1]*1.5);
@@ -419,7 +404,15 @@ function updateAsteroids( now ){
     // Deletes busted asteroids
     var length = roidsToDelete.length;
     for (var i = 0; i < length; i++){
-        roids.splice(roidsToDelete.pop(),1);
+        var delRoidInd = roidsToDelete.pop();
+        var delRoid = roids[delRoidInd];
+        if ( delRoid.destroyed ){
+            const explodeAudio = document.getElementById("explodeSound");
+            const newAudio = explodeAudio.cloneNode()
+            newAudio.play()
+        }
+        roids.splice(delRoidInd,1);
+
     }
 
     roids.sort( compareAsteroids );
@@ -865,3 +858,8 @@ function generateCircPoints( rad, center, divs ){
 // https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html
 // We do not claim to have ownership over this function, but
 // we also did not simply just copy and past other people's work
+//
+// Shoot Sound:
+// https://freesound.org/people/LittleRobotSoundFactory/sounds/270344/
+// Explosion Sound:
+// https://freesound.org/people/jalastram/sounds/317748/

@@ -27,10 +27,6 @@ var bullets = [];
 var newBullLifetime = 1, bulletSpeed = 500;
 var nextBulletTime = 0, origBulletTime = .15;
 
-var context; // Audio stuff
-var bufferLoader;
-var bufferList = [];
-
 function init(){
     var canvas=document.getElementById("asteroids-canvas");
     gl=WebGLUtils.setupWebGL(canvas);

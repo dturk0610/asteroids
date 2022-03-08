@@ -40,6 +40,12 @@ function Player ( points = [], position = vec2(0, 0), speed = 0, theta = 0 ){
         this.lives--;
         if (this.lives < 1) return;
         this.hyperSpaceJump( h, w );
+        const explodeAudio = document.getElementById("deathSound");
+        const newAudio = explodeAudio.cloneNode()
+        newAudio.play()
     }
 
 }
+
+// Player explosion sound
+// https://freesound.org/people/jalastram/sounds/317767/

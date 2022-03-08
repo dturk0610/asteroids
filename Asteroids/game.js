@@ -12,6 +12,10 @@ var roidsToDelete = [];
 var player, playerBuffer, playerShaderProgram;
 var livesBuffer;
 
+var score = 0;
+var imageProgram, imagePosBuffer, texcoordBuffer;
+var frame = 0;
+
 var timeDelta = 0;
 var keyW, keyA, keyS, keyD, spacebar;
 
@@ -26,9 +30,10 @@ var bulletBuffer, bulletShaderProgram;
 var bullets = [];
 var newBullLifetime = 1, bulletSpeed = 500;
 var nextBulletTime = 0, origBulletTime = .15;
+var canvas;
 
 function init(){
-    var canvas=document.getElementById("asteroids-canvas");
+    canvas=document.getElementById("asteroids-canvas");
     gl=WebGLUtils.setupWebGL(canvas);
     if (!gl) { alert( "WebGL is not available" ); }
 
@@ -61,9 +66,79 @@ function init(){
     setupPlayer();
     setupNewSetOfAsteroids();
 
+
     window.requestAnimationFrame(animate);
 }
 
+// creates a texture info { width: w, height: h, texture: tex }
+// The texture will start with 1x1 pixels and be updated
+// when the image has loaded
+function loadImageAndCreateTextureInfo(url) {
+    var tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+   
+    // let's assume all images are not a power of 2
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+   
+    var textureInfo = {
+      width: 1,   // we don't know the size until it loads
+      height: 1,
+      texture: tex,
+    };
+    var img = new Image();
+    img.addEventListener('load', function() {
+      textureInfo.width = img.width;
+      textureInfo.height = img.height;
+   
+      gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    });
+   
+    return textureInfo;
+  }
+   
+
+  // Unlike images, textures do not have a width and height associated
+// with them so we'll pass in the width and height of the texture
+function drawImage(tex, texWidth, texHeight, dstX, dstY) {
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+   
+    // Tell WebGL to use our shader program pair
+    gl.useProgram(imageProgram);
+   
+    // Setup the attributes to pull data from our buffers
+    gl.bindBuffer(gl.ARRAY_BUFFER, imagePosBuffer);
+    var positionLocation = gl.getAttribLocation(imageProgram, "a_position");
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+    var texcoordLocation = gl.getAttribLocation(imageProgram, "a_texcoord");
+    gl.enableVertexAttribArray(texcoordLocation);
+    gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
+   
+    // this matrix will convert from pixels to clip space
+    var matrix = m4.orthographic(0, w, h, 0, -1, 1);
+   
+    // this matrix will translate our quad to dstX, dstY
+    matrix = m4.translate(matrix, dstX, dstY, 0);
+   
+    // this matrix will scale our 1 unit quad
+    // from 1 unit to texWidth, texHeight units
+    matrix = m4.scale(matrix, texWidth, texHeight, 1);
+   
+    // Set the matrix.
+    var matrixLocation = gl.getUniformLocation( imageProgram, "u_matrix" );
+    gl.uniformMatrix4fv(matrixLocation, false, matrix);
+   
+    // Tell the shader to get the texture from texture unit 0
+    var textureLocation = gl.getUniformLocation(imageProgram, "u_texture");
+    gl.uniform1i(textureLocation, 0);
+   
+    // draw the quad (2 triangles, 6 vertices)
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
 
 function onKeyDown(event) {
     var keyCode = event.keyCode;
@@ -129,10 +204,13 @@ function setupGL(){
     playerBuffer = gl.createBuffer();
     livesBuffer = gl.createBuffer();
     bulletBuffer = gl.createBuffer();
-
+    imagePosBuffer = gl.createBuffer();
+    texcoordBuffer = gl.createBuffer();
+    
     asteroidShaderProgram = initShaders( gl, "vertex-shader", "frag-asteroid" );
     playerShaderProgram = initShaders( gl, "vertex-shader", "frag-player" );
     bulletShaderProgram = initShaders( gl, "vertex-shader", "frag-orange" );
+    imageProgram = initShaders( gl, "vert-img", "frag-img" );
 
 }
 
@@ -261,6 +339,7 @@ function animate( now ){
         updatePlayer( now );
         drawPlayer();
         drawLives();
+        nextBulletTime -= (now - pastTime);
     }
 
     // Updates all the currently spawned bullets
@@ -270,18 +349,22 @@ function animate( now ){
     // Now that all has been updated and rendered, we update
     // the past time to now and request the next animation
     pastTime = now;
+    
+    var oneImgInfo = loadImageAndCreateTextureInfo("http://www.w3.org/html/logo/img/mark-word-icon.png");
+    drawImage(oneImgInfo.texture, oneImgInfo.width, oneImgInfo.height, 0 , 0 );
+
+
     window.requestAnimationFrame( animate );
 }
 
 function tryFire( now ){
     if (player.lives > 0 && nextBulletTime < 0){
-    var playDir = player.dir;
-    var bullPos = vec2(player.position[0], player.position[1]);
-    var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
-    bullets.push(newBullet);
-    nextBulletTime = origBulletTime;
+        var playDir = player.dir;
+        var bullPos = vec2(player.position[0], player.position[1]);
+        var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
+        bullets.push(newBullet);
+        nextBulletTime = origBulletTime;
     }
-    nextBulletTime -= (now - pastTime);
 }
 
 // #region UPDATE FUNCTIONS REGION
@@ -364,11 +447,11 @@ function updateAsteroids( now ){
             allPointsOutOfView &= offScreen;
         }
 
-        if (mag(vec3( outsidePointVal )) > 1 && !currRoid.goingOffScreen){
+        if ( mag( vec3( outsidePointVal ) ) > 1 && !currRoid.goingOffScreen){
             currRoid.goingOffScreen = true;
             var edgeRoid = new Asteroid();
-            Object.assign(edgeRoid, currRoid);
-            edgeRoid.position = vec2(currRoid.position[0], currRoid.position[1]);
+            Object.assign( edgeRoid, currRoid );
+            edgeRoid.position = vec2( currRoid.position[0], currRoid.position[1] );
             edgeRoid.goingOffScreen = false;
             edgeRoid.destroyed = false;
             edgeRoid.position[0] += outsidePointVal[0];
@@ -452,6 +535,13 @@ function updatePlayer( now ){
 
     player.position[0] += timeDelta*player.speed*Math.cos(player.theta);
     player.position[1] += timeDelta*player.speed*Math.sin(player.theta);
+    
+    frame ++;
+    if (frame % 200 == 0){
+        score++;
+        // console.log(score);
+        frame = 0;
+    }
 }
 
 function updateBullets( now ){
@@ -682,11 +772,6 @@ function checkPlayerCollision( character, roid ){
     // clearly not overlapping
     if (minDirChar > maxDirRoid || minDirRoid > maxDirChar) return;
     
-    var overlap = vec2( Math.max( minDirChar, minDirRoid ), Math.min( maxDirChar, maxDirRoid ) );
-
-
-    //console.log("minmax char: [" + minDirChar + ", " + maxDirChar + "] minmax roid: [" + minDirRoid + ", " + maxDirRoid + "]");
-    //console.log("overlap: " + overlap);
     character.damage( h, w );
 
 }
@@ -699,6 +784,7 @@ function checkBulletCollision( bullet, roid ){
     if (roid.isInside(pointOnBullet)){
         roid.destroyed = true;
         bullet.lifetime = 0;
+        score += 10;
     }
 
 }
@@ -784,6 +870,103 @@ function rotateVelocity(vel, theta){
 }
 
 // #endregion
+
+// #region M4
+
+var m4 = {
+    multiply: function(a, b) {
+        var b00 = b[0 * 4 + 0];
+        var b01 = b[0 * 4 + 1];
+        var b02 = b[0 * 4 + 2];
+        var b03 = b[0 * 4 + 3];
+        var b10 = b[1 * 4 + 0];
+        var b11 = b[1 * 4 + 1];
+        var b12 = b[1 * 4 + 2];
+        var b13 = b[1 * 4 + 3];
+        var b20 = b[2 * 4 + 0];
+        var b21 = b[2 * 4 + 1];
+        var b22 = b[2 * 4 + 2];
+        var b23 = b[2 * 4 + 3];
+        var b30 = b[3 * 4 + 0];
+        var b31 = b[3 * 4 + 1];
+        var b32 = b[3 * 4 + 2];
+        var b33 = b[3 * 4 + 3];
+        var a00 = a[0 * 4 + 0];
+        var a01 = a[0 * 4 + 1];
+        var a02 = a[0 * 4 + 2];
+        var a03 = a[0 * 4 + 3];
+        var a10 = a[1 * 4 + 0];
+        var a11 = a[1 * 4 + 1];
+        var a12 = a[1 * 4 + 2];
+        var a13 = a[1 * 4 + 3];
+        var a20 = a[2 * 4 + 0];
+        var a21 = a[2 * 4 + 1];
+        var a22 = a[2 * 4 + 2];
+        var a23 = a[2 * 4 + 3];
+        var a30 = a[3 * 4 + 0];
+        var a31 = a[3 * 4 + 1];
+        var a32 = a[3 * 4 + 2];
+        var a33 = a[3 * 4 + 3];
+     
+        return [
+          b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30,
+          b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31,
+          b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32,
+          b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33,
+          b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30,
+          b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31,
+          b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32,
+          b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33,
+          b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30,
+          b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31,
+          b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32,
+          b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33,
+          b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30,
+          b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31,
+          b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32,
+          b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33,
+        ];
+    },
+    translation: function(tx, ty, tz) {
+        return [
+           1,  0,  0,  0,
+           0,  1,  0,  0,
+           0,  0,  1,  0,
+           tx, ty, tz, 1,
+        ];
+      },
+    translate: function(m, tx, ty, tz) {
+        return m4.multiply(m, m4.translation(tx, ty, tz));
+    },
+    scaling: function(sx, sy, sz) {
+        return [
+          sx, 0,  0,  0,
+          0, sy,  0,  0,
+          0,  0, sz,  0,
+          0,  0,  0,  1,
+        ];
+      },
+    
+    scale: function(m, sx, sy, sz) {
+        return m4.multiply(m, m4.scaling(sx, sy, sz));
+    },
+    orthographic: function(left, right, bottom, top, near, far) {
+      return [
+        2 / (right - left), 0, 0, 0,
+        0, 2 / (top - bottom), 0, 0,
+        0, 0, 2 / (near - far), 0,
+   
+        (left + right) / (left - right),
+        (bottom + top) / (bottom - top),
+        (near + far) / (near - far),
+        1,
+      ];
+    }
+}
+
+// #endregion
+
+
 
 // #region POSSIBLY USELESS
 

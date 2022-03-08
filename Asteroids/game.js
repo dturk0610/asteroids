@@ -364,6 +364,12 @@ function tryFire( now ){
         var newBullet = new Bullet(bullPos, vec2(bulletSpeed*playDir[0], bulletSpeed*playDir[1]), newBullLifetime);
         bullets.push(newBullet);
         nextBulletTime = origBulletTime;
+        const shootAudio = document.getElementById("shootSound");
+        const newAudio = shootAudio.cloneNode()
+        newAudio.play()
+
+
+    //playSound();
     }
 }
 
@@ -403,6 +409,7 @@ function updateAsteroids( now ){
 
         // Collision goes here!
         if (currRoid.destroyed == true && currRoid.size > 1){
+            
             var vel1 = rotateVelocity(currVel, Math.PI/8.0 + Math.random()*Math.PI/16.0 );
             var vel2 = rotateVelocity(currVel, -Math.PI/8.0 + Math.random()*Math.PI/16.0 );
             vel1 = vec2(vel1[0]*1.5,vel1[1]*1.5);
@@ -474,7 +481,15 @@ function updateAsteroids( now ){
     // Deletes busted asteroids
     var length = roidsToDelete.length;
     for (var i = 0; i < length; i++){
-        roids.splice(roidsToDelete.pop(),1);
+        var delRoidInd = roidsToDelete.pop();
+        var delRoid = roids[delRoidInd];
+        if ( delRoid.destroyed ){
+            const explodeAudio = document.getElementById("explodeSound");
+            const newAudio = explodeAudio.cloneNode()
+            newAudio.play()
+        }
+        roids.splice(delRoidInd,1);
+
     }
 
     roids.sort( compareAsteroids );
@@ -1020,3 +1035,8 @@ function generateCircPoints( rad, center, divs ){
 // https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html
 // We do not claim to have ownership over this function, but
 // we also did not simply just copy and past other people's work
+//
+// Shoot Sound:
+// https://freesound.org/people/LittleRobotSoundFactory/sounds/270344/
+// Explosion Sound:
+// https://freesound.org/people/jalastram/sounds/317748/

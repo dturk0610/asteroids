@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script type="text/javascript" src="../Common/webgl-utils.js"></script>
+        <script type="text/javascript" src="../Common/initShaders.js"></script>
+        <script type="text/javascript" src="../Common/MV.js"></script>
+        <script type="text/javascript" src="menu.js"></script>
+
+        <script id="vertex-shader" type="x-shader/x-vertex">
+            attribute vec4 myPosition;
+
+            void main(){
+                gl_PointSize = 1.0;
+                gl_Position = myPosition;
+            }
+        </script>
+
+        <script id="frag-player" type="x-shader/x-fragment">
+            void main(){
+                gl_FragColor = vec4( 1.0, 0.0, 1.0, 1.0 );
+            }
+        </script> 
+    </head>
+
+    <body>
+        <!--
+        <canvas id="gl-canvas" width="2048" height="2048"></canvas>
+        -->
+        <canvas id="asteroids-canvas" width="1242" height="720"></canvas>
+        <button id="start-button" onclick="start()">START!</button>
+    </body>
+</html>

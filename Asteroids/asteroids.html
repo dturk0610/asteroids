@@ -8,6 +8,7 @@
         <script type="text/javascript" src="player.js"></script>
         <script type="text/javascript" src="bullet.js"></script>
         <script type="text/javascript" src="game.js"></script>
+        <script type="text/javascript" src="numbers.js"></script>
         <audio id="shootSound" src="../Sounds/shoot.mp3" preload="auto"></audio>
         <audio id="explodeSound" src="../Sounds/explode.mp3" preload="auto"></audio>
         <audio id="deathSound" src="../Sounds/death.mp3" preload="auto"></audio>
@@ -20,22 +21,6 @@
                 gl_Position = myPosition;
             }
         </script>
-
-        <script id="vert-img" type="x-shader/x-vertex">
-            attribute vec4 a_position;
-            attribute vec2 a_texcoord;
-
-            uniform mat4 u_matrix;
- 
-            varying vec2 v_texcoord;
- 
-            void main() {
-                gl_Position = u_matrix * a_position;
-                v_texcoord = a_texcoord;
-            }
-        </script>
-
-        
 
         <script id="frag-asteroid" type="x-shader/x-fragment">
             uniform bool destroyed;
@@ -57,18 +42,6 @@
         <script id="frag-orange" type="x-shader/x-fragment">
             void main(){
                 gl_FragColor = vec4( 255.0/255.0, 145.0/255.0, 0.0/255.0, 1.0 );
-            }
-        </script>
-
-        <script id="frag-img" type="x-shader/x-fragment">
-            precision mediump float;
- 
-            varying vec2 v_texcoord;
- 
-            uniform sampler2D u_texture;
- 
-            void main() {
-               gl_FragColor = texture2D(u_texture, v_texcoord);
             }
         </script>
 

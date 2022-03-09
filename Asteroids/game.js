@@ -13,7 +13,6 @@ var player, playerBuffer, playerShaderProgram;
 var livesBuffer;
 
 var score = 0;
-var imageProgram, imagePosBuffer, texcoordBuffer;
 var frame = 0;
 
 var timeDelta = 0;
@@ -68,76 +67,6 @@ function init(){
 
 
     window.requestAnimationFrame(animate);
-}
-
-// creates a texture info { width: w, height: h, texture: tex }
-// The texture will start with 1x1 pixels and be updated
-// when the image has loaded
-function loadImageAndCreateTextureInfo(url) {
-    var tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-   
-    // let's assume all images are not a power of 2
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-   
-    var textureInfo = {
-      width: 1,   // we don't know the size until it loads
-      height: 1,
-      texture: tex,
-    };
-    var img = new Image();
-    img.addEventListener('load', function() {
-      textureInfo.width = img.width;
-      textureInfo.height = img.height;
-   
-      gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    });
-   
-    return textureInfo;
-  }
-   
-
-  // Unlike images, textures do not have a width and height associated
-// with them so we'll pass in the width and height of the texture
-function drawImage(tex, texWidth, texHeight, dstX, dstY) {
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-   
-    // Tell WebGL to use our shader program pair
-    gl.useProgram(imageProgram);
-   
-    // Setup the attributes to pull data from our buffers
-    gl.bindBuffer(gl.ARRAY_BUFFER, imagePosBuffer);
-    var positionLocation = gl.getAttribLocation(imageProgram, "a_position");
-    gl.enableVertexAttribArray(positionLocation);
-    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-    var texcoordLocation = gl.getAttribLocation(imageProgram, "a_texcoord");
-    gl.enableVertexAttribArray(texcoordLocation);
-    gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
-   
-    // this matrix will convert from pixels to clip space
-    var matrix = m4.orthographic(0, w, h, 0, -1, 1);
-   
-    // this matrix will translate our quad to dstX, dstY
-    matrix = m4.translate(matrix, dstX, dstY, 0);
-   
-    // this matrix will scale our 1 unit quad
-    // from 1 unit to texWidth, texHeight units
-    matrix = m4.scale(matrix, texWidth, texHeight, 1);
-   
-    // Set the matrix.
-    var matrixLocation = gl.getUniformLocation( imageProgram, "u_matrix" );
-    gl.uniformMatrix4fv(matrixLocation, false, matrix);
-   
-    // Tell the shader to get the texture from texture unit 0
-    var textureLocation = gl.getUniformLocation(imageProgram, "u_texture");
-    gl.uniform1i(textureLocation, 0);
-   
-    // draw the quad (2 triangles, 6 vertices)
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
 function onKeyDown(event) {
@@ -204,13 +133,10 @@ function setupGL(){
     playerBuffer = gl.createBuffer();
     livesBuffer = gl.createBuffer();
     bulletBuffer = gl.createBuffer();
-    imagePosBuffer = gl.createBuffer();
-    texcoordBuffer = gl.createBuffer();
     
     asteroidShaderProgram = initShaders( gl, "vertex-shader", "frag-asteroid" );
     playerShaderProgram = initShaders( gl, "vertex-shader", "frag-player" );
     bulletShaderProgram = initShaders( gl, "vertex-shader", "frag-orange" );
-    imageProgram = initShaders( gl, "vert-img", "frag-img" );
 
 }
 
@@ -349,12 +275,46 @@ function animate( now ){
     // Now that all has been updated and rendered, we update
     // the past time to now and request the next animation
     pastTime = now;
-    
-    var oneImgInfo = loadImageAndCreateTextureInfo("http://www.w3.org/html/logo/img/mark-word-icon.png");
-    drawImage(oneImgInfo.texture, oneImgInfo.width, oneImgInfo.height, 0 , 0 );
 
+    //console.log(oneVerts);
+    drawNumber(oneVerts, vec2( w/2, h/2 ) );
+    drawNumber(twoVerts, vec2( w/2 + 20, h/2 ) );
+    drawNumber(threeVerts, vec2( w/2 + 50, h/2 ) );
 
     window.requestAnimationFrame( animate );
+}
+
+function drawNumber( numVerts, positition ){
+
+    var flipMat = mat4([1,  0, 0,   0],
+                       [0, -1, 0, -16],
+                       [0,  0, 1,   0],
+                       [0,  0, 0,   1]);
+    var scaleMat = mat4([4, 0, 0, 0],
+                        [0, 3, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]);
+    var newVerts = matVecArrMult(numVerts, flipMat);
+    newVerts = matVecArrMult(newVerts, scaleMat);
+
+    // Clears our buffer bit and then sets up our roid buffer
+    var numBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, numBuffer );
+    gl.useProgram( playerShaderProgram );
+
+    // Sets up our shaders
+    var myPos = gl.getAttribLocation( playerShaderProgram, "myPosition" );
+    gl.enableVertexAttribArray( myPos );
+    gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
+
+    var pointsToRender = [];
+    for (var i = 0; i < newVerts.length; i++){
+        pointsToRender.push( convertCanvasPosToView( newVerts[i][0] + positition[0], newVerts[i][1] + positition[1] ) );
+    }
+
+    gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
+    gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
+
 }
 
 function tryFire( now ){

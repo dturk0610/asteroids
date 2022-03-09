@@ -276,11 +276,8 @@ function animate( now ){
     // the past time to now and request the next animation
     pastTime = now;
 
-    //console.log(oneVerts);
-    drawNumber(oneVerts, vec2( w/2, h/2 ) );
-    drawNumber(twoVerts, vec2( w/2 + 20, h/2 ) );
-    drawNumber(threeVerts, vec2( w/2 + 50, h/2 ) );
-
+    drawScore();
+    
     window.requestAnimationFrame( animate );
 }
 
@@ -695,6 +692,54 @@ function drawBullets(){
         gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
     }
 
+}
+
+function drawScore(){
+
+    var tempScore = score;
+    var yPadd = 0;
+    var xPadd = 10;
+    var padding = 30;
+    var offset = 0;
+    while (tempScore >= 0){
+        var modVal = tempScore % 10
+        switch (modVal){
+            case 0:
+                // need both to draw 0
+                drawNumber(zeroOutVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawNumber(zeroInVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); 
+                break;
+            case 1: drawNumber(oneVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 2: drawNumber(twoVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 3: drawNumber(threeVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 4: drawNumber(fourVerts,  vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 5: drawNumber(fiveVerts,  vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 6:
+                // both are needed to draw 6
+                drawNumber(sixOutVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawNumber(sixInVerts,     vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                break;
+            case 7: drawNumber(sevenVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 8:
+                // all three are needed to draw 8
+                drawNumber(eightOutVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawNumber(eightTopInVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawNumber(eightBotInVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                break;
+            case 9:
+                // need both to draw 9
+                drawNumber(nineOutVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawNumber(nineInVerts,     vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                break;
+            default: break;
+
+        }
+        tempScore = (tempScore - modVal)/10;
+        if (tempScore == 0) tempScore = -1;
+        offset ++;
+    }
+
+    
 }
 
 // #endregion

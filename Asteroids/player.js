@@ -38,11 +38,11 @@ function Player ( points = [], position = vec2(0, 0), speed = 0, theta = 0 ){
 
     this.damage = function( h, w ){
         this.lives--;
-        if (this.lives < 1) return;
-        this.hyperSpaceJump( h, w );
         const explodeAudio = document.getElementById("deathSound");
         const newAudio = explodeAudio.cloneNode()
         newAudio.play()
+        if (this.lives < 1) return;
+        this.hyperSpaceJump( h, w );
     }
 
 }

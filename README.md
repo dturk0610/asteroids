@@ -6,11 +6,11 @@ This game will be written by Dakota Turk and Harrison Walker
 
 The controls of the game will likely be very simple. A brief example:
 
-W - Move Forward
-A - Turn Left
-S - Hyperspace Jump
-D - Turn Right
-Space - Shoot
+W - Move Forward ![Bad Gif](Gifs/W.gif)
+A - Turn Left ![Bad Gif](Gifs/A.gif)
+S - Hyperspace Jump ![Bad Gif](Gifs/S.gif)
+D - Turn Right ![Bad Gif](Gifs/D.gif)
+Space - Shoot ![Bad Gif](Gifs/Space.gif)
 
 We do not claim to own this game or any of its intellectual property (if any) we simply are making this game for our Computer Graphics course.
 

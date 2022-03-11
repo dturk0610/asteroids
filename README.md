@@ -6,7 +6,7 @@ This game will be written by Dakota Turk and Harrison Walker
 
 The controls of the game will likely be very simple. A brief example:
 
-W - Move Forward ![Bad Gif](Gifs/W.gif)/![](Gifs/W.gif)
+W - Move Forward ![Bad Gif](Gifs/W.gif)
 A - Turn Left ![Bad Gif](Gifs/A.gif)
 S - Hyperspace Jump ![Bad Gif](Gifs/S.gif)
 D - Turn Right ![Bad Gif](Gifs/D.gif)

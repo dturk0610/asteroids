@@ -26,10 +26,10 @@ Asteroids:
 
 - Each asteroid has a center, a velocity, and an array containing the vertices
 
-- To create a brand new asteroid, first a random 
-position on the screen is picked to be the center
-- Next, 12 points evenly rotated around the center are 
-generated at random radius from the center
+- To create a brand new asteroid, first a random position on the screen is picked to be the center
+
+- Next, 12 points evenly rotated around the center are  generated at random radius from the center
+
 - Finally, a random velocity vector is also generated
 
 - Break off asteroids are generated at the same position as the parent asteroid but with a smaller radius and different velocity vector
@@ -40,7 +40,7 @@ Score:
 
 Sound:
 
-- Shooting: ![Shoot Sound](/Sounds/shoot.mp4)
+- Shooting: ![Shoot Sound](Sounds/shoot.mp4)
 
 - Player death: 
 

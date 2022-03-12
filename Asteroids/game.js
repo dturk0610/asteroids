@@ -281,39 +281,6 @@ function animate( now ){
     window.requestAnimationFrame( animate );
 }
 
-function drawNumber( numVerts, positition ){
-
-    var flipMat = mat4([1,  0, 0,   0],
-                       [0, -1, 0, -16],
-                       [0,  0, 1,   0],
-                       [0,  0, 0,   1]);
-    var scaleMat = mat4([4, 0, 0, 0],
-                        [0, 3, 0, 0],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, 1]);
-    var newVerts = matVecArrMult(numVerts, flipMat);
-    newVerts = matVecArrMult(newVerts, scaleMat);
-
-    // Clears our buffer bit and then sets up our roid buffer
-    var numBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, numBuffer );
-    gl.useProgram( playerShaderProgram );
-
-    // Sets up our shaders
-    var myPos = gl.getAttribLocation( playerShaderProgram, "myPosition" );
-    gl.enableVertexAttribArray( myPos );
-    gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
-
-    var pointsToRender = [];
-    for (var i = 0; i < newVerts.length; i++){
-        pointsToRender.push( convertCanvasPosToView( newVerts[i][0] + positition[0], newVerts[i][1] + positition[1] ) );
-    }
-
-    gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
-    gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
-
-}
-
 function tryFire( now ){
     if (player.lives > 0 && nextBulletTime < 0){
         var playDir = player.dir;
@@ -697,7 +664,7 @@ function drawBullets(){
 function drawScore(){
 
     var tempScore = score;
-    var yPadd = 0;
+    var yPadd = 45;
     var xPadd = 10;
     var padding = 30;
     var offset = 0;
@@ -737,9 +704,34 @@ function drawScore(){
         tempScore = (tempScore - modVal)/10;
         if (tempScore == 0) tempScore = -1;
         offset ++;
+    }    
+}
+
+function drawNumber( numVerts, positition ){
+    var scaleMat = mat4([4, 0, 0, 0],
+                        [0, 3, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]);
+    var newVerts = matVecArrMult(numVerts, scaleMat);
+
+    // Clears our buffer bit and then sets up our roid buffer
+    var numBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, numBuffer );
+    gl.useProgram( playerShaderProgram );
+
+    // Sets up our shaders
+    var myPos = gl.getAttribLocation( playerShaderProgram, "myPosition" );
+    gl.enableVertexAttribArray( myPos );
+    gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
+
+    var pointsToRender = [];
+    for (var i = 0; i < newVerts.length; i++){
+        pointsToRender.push( convertCanvasPosToView( newVerts[i][0] + positition[0], newVerts[i][1] + positition[1] ) );
     }
 
-    
+    gl.bufferData( gl.ARRAY_BUFFER, flatten( pointsToRender ), gl.STATIC_DRAW );
+    gl.drawArrays( gl.LINE_LOOP, 0, pointsToRender.length );
+
 }
 
 // #endregion

@@ -42,6 +42,12 @@ Sound:
 
 - Shooting:
 
+https://user-images.githubusercontent.com/50917856/157999802-10226408-f982-4d8c-b654-e8804d35f545.mp4
+
 - Player death:
 
+https://user-images.githubusercontent.com/50917856/157999813-7baeeffb-1563-4055-9e4c-11c2863e20c6.mp4
+
 - Asteroid explode:
+
+https://user-images.githubusercontent.com/50917856/157999819-19c34326-1f8d-49ff-9ac0-26172e32891e.mp4

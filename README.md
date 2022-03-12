@@ -46,7 +46,7 @@ https://user-images.githubusercontent.com/50917856/157999802-10226408-f982-4d8c-
 
 - Player death:
 
-https://github.com/dturk0610/asteroids/blob/main/Sounds/death.mp4
+https://user-images.githubusercontent.com/50917856/157999813-7baeeffb-1563-4055-9e4c-11c2863e20c6.mp4
 
 - Asteroid explode:
 

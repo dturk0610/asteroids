@@ -40,7 +40,7 @@ Score:
 
 Sound:
 
-- Shooting: ![Shoot Sound](Sounds/shoot.mp4)
+- Shooting: ![Shoot Sound](/Sounds/shoot.mp4)
 
 - Player death: 
 

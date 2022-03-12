@@ -801,6 +801,10 @@ function checkBulletCollision( bullet, roid ){
 
 }
 
+function restart() {
+    window.location.href = "asteroids.html";
+}
+
 // #endregion
 
 // #region USEFUL FUNCTIONS REGION

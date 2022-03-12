@@ -36,6 +36,10 @@ Asteroids:
 
 Player:
 
+Lives:
+
+- The player has 3 lives. You loose one when you collide with an asteroid. The lives are shown at the top right of the screen using 3 player models.
+
 Score:
 
 Sound:

@@ -31,6 +31,8 @@ var newBullLifetime = 1, bulletSpeed = 500;
 var nextBulletTime = 0, origBulletTime = .15;
 var canvas;
 
+var boxVerts = [];
+
 function init(){
     canvas=document.getElementById("asteroids-canvas");
     gl=WebGLUtils.setupWebGL(canvas);
@@ -52,7 +54,7 @@ function init(){
     // of them. The hope is to use this function to have easy
     // collision detection with the shots from them player
     canvas.addEventListener("mousedown", function(e)
-    { tryClickAsteroid(canvas, e); }); 
+    { tryRestart(canvas, e); }); 
 
     //event listener
     window.addEventListener("keydown", onKeyDown, false);
@@ -65,6 +67,13 @@ function init(){
     setupPlayer();
     setupNewSetOfAsteroids();
 
+    boxVerts = [ vec4( -1, -1, 0, 1), vec4( -1, 1, 0, 1), 
+        vec4( 1, 1, 0, 1), vec4( 1, -1, 0, 1)]
+    var scaleMat = mat4([ 35, 0, 0, 0 ],
+                        [ 0, 8, 0, 0 ],
+                        [ 0, 0, 1, 0 ],
+                        [ 0, 0, 0, 1 ]);
+    boxVerts = matVecArrMult( boxVerts, scaleMat );
 
     window.requestAnimationFrame(animate);
 }
@@ -90,6 +99,24 @@ function onKeyUp(event) {
     }
 }
 
+function tryRestart(canvas, event){
+
+    // Gets the rectangle making up the canvas then calculates
+    // the mouse position with the bottom left being observed
+    // as the (0, 0).
+    let rect = canvas.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = rect.height - (event.clientY - rect.top);
+
+    var minX = boxVerts[0][0]*4 + w*.5;
+    var maxX = boxVerts[2][0]*4 + w*.5;
+    var minY = boxVerts[0][1]*3 + h*.5;
+    var maxY = boxVerts[1][1]*3 + h*.5;
+
+    if (x >= minX && x <= maxX && y >= minY && y <= maxY){
+        restart();
+    }
+}
 
 // This event function is used to test the isInside functionality
 // Hopefull this will be useful in later version, for possible 
@@ -266,6 +293,8 @@ function animate( now ){
         drawPlayer();
         drawLives();
         nextBulletTime -= (now - pastTime);
+    } else {
+        drawGameOver();
     }
 
     // Updates all the currently spawned bullets
@@ -481,6 +510,35 @@ function updatePlayer( now ){
         // console.log(score);
         frame = 0;
     }
+}
+
+// Draw the Game Over screen
+function drawGameOver() {
+    drawNumber( gVerts, vec2( w/2 - 120, h/2 + 50 ) );
+    drawNumber( aOutVerts,  vec2( w/2 - 90, h/2 + 50 ) );
+    drawNumber( aInVerts,    vec2( w/2 - 90, h/2 + 50 ) );
+    drawNumber( mVerts,    vec2( w/2 - 60, h/2 + 50 ) );
+    drawNumber( eVerts,    vec2( w/2 - 30, h/2 + 50 ) );
+    // space
+    drawNumber( oOutVerts, vec2( w/2 + 30, h/2 + 50 ) );
+    drawNumber( oInVerts,  vec2( w/2 + 30, h/2 + 50 ) );
+    drawNumber( vVerts,    vec2( w/2 + 60, h/2 + 50 ) );
+    drawNumber( eVerts, vec2( w/2 + 90, h/2 + 50 ) );
+    drawNumber( rOutVerts,  vec2( w/2 + 120, h/2 + 50 ) );
+    drawNumber( rInVerts,    vec2( w/2 + 120, h/2 + 50 ) );
+
+    drawNumber( nVerts, vec2( w/2 - 120, h/2 - 14 ) );
+    drawNumber( eVerts, vec2( w/2 - 90, h/2 - 14 ) );
+    drawNumber( wVerts, vec2( w/2 - 60, h/2 - 14 ) );
+    // space
+    drawNumber( gVerts, vec2( w/2, h/2 - 14 ) );
+    drawNumber( aOutVerts, vec2( w/2 + 30, h/2 - 14 ) );
+    drawNumber( aInVerts, vec2( w/2 + 30, h/2 - 14 ) );
+    drawNumber( mVerts, vec2( w/2 + 60, h/2 - 14 ) );
+    drawNumber( eVerts, vec2( w/2 + 90, h/2 - 14 ) );
+    drawNumber( qmUpVerts, vec2( w/2 + 120, h/2 - 14 ) );
+    drawNumber( qmLowVerts, vec2( w/2 + 120, h/2 - 14 ) );
+    drawNumber( boxVerts, vec2(w/2, h/2 ) );
 }
 
 function updateBullets( now ){

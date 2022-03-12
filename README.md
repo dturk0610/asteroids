@@ -40,8 +40,8 @@ Score:
 
 Sound:
 
-- Shooting: ![Shoot Sound](Sounds/shoot.mp4)
+- Shooting:
 
-- Player death: 
+- Player death:
 
-- Asteroid explode: 
+- Asteroid explode:

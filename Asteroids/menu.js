@@ -249,14 +249,29 @@ function animate( now ){
 
 function drawStart(){
 
-    drawNumber( sVerts, vec2( w/2 - 60 - 10, h/2 - 14 ) );
-    drawNumber( tVerts, vec2( w/2 - 30 - 10, h/2 - 14 ) );
-    drawNumber( aOutVerts, vec2( w/2 - 10, h/2 - 14 ) );
-    drawNumber( aInVerts, vec2( w/2 - 10, h/2 - 14 ) );
-    drawNumber( rOutVerts, vec2( w/2 + 30 - 10, h/2 - 14 ) );
-    drawNumber( rInVerts, vec2( w/2 + 30 - 10, h/2 - 14 ) );
-    drawNumber( tVerts, vec2( w/2 + 60 - 10, h/2 - 14 ) );
+    drawNumber( sVerts, vec2( w/2 - 60, h/2 - 14 ) );
+    drawNumber( tVerts, vec2( w/2 - 30, h/2 - 14 ) );
+    drawNumber( aOutVerts, vec2( w/2, h/2 - 14 ) );
+    drawNumber( aInVerts, vec2( w/2, h/2 - 14 ) );
+    drawNumber( rOutVerts, vec2( w/2 + 30, h/2 - 14 ) );
+    drawNumber( rInVerts, vec2( w/2 + 30, h/2 - 14 ) );
+    drawNumber( tVerts, vec2( w/2 + 60, h/2 - 14 ) );
     drawNumber( boxVerts, vec2(w/2, h/2 ) );
+
+    drawNumber( aOutVerts, vec2( w/2 - 120, h/2 + 50 ) );
+    drawNumber( aInVerts,  vec2( w/2 - 120, h/2 + 50 ) );
+    drawNumber( sVerts,    vec2( w/2 - 90, h/2 + 50 ) );
+    drawNumber( tVerts,    vec2( w/2 - 60, h/2 + 50 ) );
+    drawNumber( eVerts,    vec2( w/2 - 30, h/2 + 50 ) );
+    drawNumber( rOutVerts, vec2( w/2, h/2 + 50 ) );
+    drawNumber( rInVerts,  vec2( w/2, h/2 + 50 ) );
+    drawNumber( oOutVerts, vec2( w/2 + 30, h/2 + 50 ) );
+    drawNumber( oInVerts,  vec2( w/2 + 30, h/2 + 50 ) );
+    drawNumber( iVerts,    vec2( w/2 + 60, h/2 + 50 ) );
+    drawNumber( dOutVerts, vec2( w/2 + 90, h/2 + 50 ) );
+    drawNumber( dInVerts,  vec2( w/2 + 90, h/2 + 50 ) );
+    drawNumber( sVerts,    vec2( w/2 + 120, h/2 + 50 ) );
+    
 
 }
 

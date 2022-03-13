@@ -83,7 +83,15 @@ After Collision
 
 #### Player on Asteroid Collision
 
-This collision method is more complicated than the previous two. More details can be found [here](https://stackoverflow.com/questions/753140/how-do-i-determine-if-two-convex-polygons-intersect). This is done by first calculating the plane separating the player and the asteroid. After that, all points around the player and asteroid are converted to the seperating axis, and the distance axis. If there is an overlap in these values, then we can assume the player and asteroid are colliding. This does create instances where an interection may not actually be happening, but this is a rare occurence to happen.
+This collision method is more complicated than the previous two. More details can be found [here](https://stackoverflow.com/questions/753140/how-do-i-determine-if-two-convex-polygons-intersect). This is done by first calculating the plane separating the player and the asteroid. After that, all points around the player and asteroid are converted to the seperating axis, and the distance axis. If there is an overlap in these values, then we can assume the player and asteroid are colliding. This does create instances where an interection may not actually be happening, but this is a rare occurence to happen. Below is a visual of a sample before and after collision:
+
+No overlap on the separating axis:
+
+![before player asteroid collision](/Images/PlayerAsteroidBeforeCollision.gif)
+
+Overlap on separating axis
+
+![after player asteroid collision](/Images/PlayerAsteroidCollision.gif)
 
 ### Sound
 

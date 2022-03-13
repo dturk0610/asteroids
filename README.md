@@ -4,7 +4,7 @@ This game will be written by Dakota Turk and Harrison Walker
 
 ## Goals
 
-The goal of the game is pretty straight forward, the player is a small triangular space ship that flies around space avoiding fast and slow moving asteroids. In order to evade the asteroids, the player can shoot them down with their built on cannon or jump into hyper space and attempt a dodge.
+The goal of the game is pretty straight forward, the player is a small triangular space ship that flies around space avoiding fast and slow moving asteroids. In order to evade the asteroids, the player can shoot them down with their built on cannon, navigate out of their path of destruction or jump into hyper space and attempt a dodge in doing so.
 
 ## Controls
 
@@ -16,9 +16,9 @@ S - Hyperspace Jump ![Hyperspace Gif](Gifs/S.gif)
 D - Turn Right ![Turn right Gif](Gifs/D.gif)
 Space - Shoot ![Shoot Gif](Gifs/Space.gif)
 
-We do not claim to own this game or any of its intellectual property (if any) we simply are making this game for our Computer Graphics course.
-
 ## Implementation
+
+The implementation of this game is broken up into a few files: asteroid.js, bullet.js and player.js are all javascript files containing the asteroid, bullet and player classes. These are all used in the game.js to play the game which is implemented in the asteroids.html file. The menu.js script is used to manage the main menu scene which is implemented in the menu.html file.
 
 Asteroids:
 
@@ -53,3 +53,5 @@ Sound:
 - Asteroid explode:
 
 <https://user-images.githubusercontent.com/50917856/157999819-19c34326-1f8d-49ff-9ac0-26172e32891e.mp4>
+
+We do not claim to own this game or any of its intellectual property (if any) we simply are making this game for our Computer Graphics course.

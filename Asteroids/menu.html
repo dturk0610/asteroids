@@ -6,7 +6,7 @@
         <script type="text/javascript" src="../Common/MV.js"></script>
         <script type="text/javascript" src="menu.js"></script>
         <script type="text/javascript" src="asteroid.js"></script>
-        <script type="text/javascript" src="numbers.js"></script>
+        <script type="text/javascript" src="characters.js"></script>
         <audio id="explodeSound" src="../Sounds/explode.mp3" preload="auto"></audio>
 
         <script id="vertex-shader" type="x-shader/x-vertex">
@@ -29,7 +29,7 @@
             }
         </script>
 
-        <script id="frag-start" type="x-shader/x-fragment">
+        <script id="frag-menu" type="x-shader/x-fragment">
             uniform bool clicked;
 
             void main(){

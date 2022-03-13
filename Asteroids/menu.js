@@ -6,7 +6,7 @@ var roidBuffer, asteroidShaderProgram;
 var roids = [];
 var roidsToDelete = [];
 
-var playerShaderProgram;
+var menuShaderProgram;
 var boxVerts;
 var startBool = false;
 
@@ -19,11 +19,6 @@ var divsForAsteroids = 12;  // there is no reason to decrease
                             // the number of points for smaller
                             // asteroids..
 
-
-var bulletBuffer, bulletShaderProgram;
-var bullets = [];
-var newBullLifetime = 1, bulletSpeed = 500;
-var nextBulletTime = 0, origBulletTime = .15;
 var canvas;
 
 function init(){
@@ -102,7 +97,7 @@ function tryClick(canvas, event) {
 
     if (x >= minX && x <= maxX && y >= minY && y <= maxY){
         startBool = true;
-        var clickUniform = gl.getUniformLocation( playerShaderProgram, "clicked" );
+        var clickUniform = gl.getUniformLocation( menuShaderProgram, "clicked" );
         gl.uniform1i( clickUniform, startBool );
     }
 }
@@ -123,7 +118,7 @@ function tryStart(canvas, event){
 
     if (x <= minX || x >= maxX || y <= minY || y >= maxY){
         startBool = false;
-        var clickUniform = gl.getUniformLocation( playerShaderProgram, "clicked" );
+        var clickUniform = gl.getUniformLocation( menuShaderProgram, "clicked" );
         gl.uniform1i( clickUniform, startBool );
     }else if (startBool) {
         start();
@@ -145,7 +140,7 @@ function setupGL(){
     roidBuffer = gl.createBuffer();
     
     asteroidShaderProgram = initShaders( gl, "vertex-shader", "frag-asteroid" );
-    playerShaderProgram = initShaders( gl, "vertex-shader", "frag-start" );
+    menuShaderProgram = initShaders( gl, "vertex-shader", "frag-menu" );
 
 }
 
@@ -249,33 +244,33 @@ function animate( now ){
 
 function drawStart(){
 
-    drawNumber( sVerts, vec2( w/2 - 60, h/2 - 14 ) );
-    drawNumber( tVerts, vec2( w/2 - 30, h/2 - 14 ) );
-    drawNumber( aOutVerts, vec2( w/2, h/2 - 14 ) );
-    drawNumber( aInVerts, vec2( w/2, h/2 - 14 ) );
-    drawNumber( rOutVerts, vec2( w/2 + 30, h/2 - 14 ) );
-    drawNumber( rInVerts, vec2( w/2 + 30, h/2 - 14 ) );
-    drawNumber( tVerts, vec2( w/2 + 60, h/2 - 14 ) );
-    drawNumber( boxVerts, vec2(w/2, h/2 ) );
+    drawCharacter( sVerts, vec2( w/2 - 60, h/2 - 14 ) );
+    drawCharacter( tVerts, vec2( w/2 - 30, h/2 - 14 ) );
+    drawCharacter( aOutVerts, vec2( w/2, h/2 - 14 ) );
+    drawCharacter( aInVerts, vec2( w/2, h/2 - 14 ) );
+    drawCharacter( rOutVerts, vec2( w/2 + 30, h/2 - 14 ) );
+    drawCharacter( rInVerts, vec2( w/2 + 30, h/2 - 14 ) );
+    drawCharacter( tVerts, vec2( w/2 + 60, h/2 - 14 ) );
+    drawCharacter( boxVerts, vec2(w/2, h/2 ) );
 
-    drawNumber( aOutVerts, vec2( w/2 - 120, h/2 + 50 ) );
-    drawNumber( aInVerts,  vec2( w/2 - 120, h/2 + 50 ) );
-    drawNumber( sVerts,    vec2( w/2 - 90, h/2 + 50 ) );
-    drawNumber( tVerts,    vec2( w/2 - 60, h/2 + 50 ) );
-    drawNumber( eVerts,    vec2( w/2 - 30, h/2 + 50 ) );
-    drawNumber( rOutVerts, vec2( w/2, h/2 + 50 ) );
-    drawNumber( rInVerts,  vec2( w/2, h/2 + 50 ) );
-    drawNumber( oOutVerts, vec2( w/2 + 30, h/2 + 50 ) );
-    drawNumber( oInVerts,  vec2( w/2 + 30, h/2 + 50 ) );
-    drawNumber( iVerts,    vec2( w/2 + 60, h/2 + 50 ) );
-    drawNumber( dOutVerts, vec2( w/2 + 90, h/2 + 50 ) );
-    drawNumber( dInVerts,  vec2( w/2 + 90, h/2 + 50 ) );
-    drawNumber( sVerts,    vec2( w/2 + 120, h/2 + 50 ) );
+    drawCharacter( aOutVerts, vec2( w/2 - 120, h/2 + 50 ) );
+    drawCharacter( aInVerts,  vec2( w/2 - 120, h/2 + 50 ) );
+    drawCharacter( sVerts,    vec2( w/2 - 90, h/2 + 50 ) );
+    drawCharacter( tVerts,    vec2( w/2 - 60, h/2 + 50 ) );
+    drawCharacter( eVerts,    vec2( w/2 - 30, h/2 + 50 ) );
+    drawCharacter( rOutVerts, vec2( w/2, h/2 + 50 ) );
+    drawCharacter( rInVerts,  vec2( w/2, h/2 + 50 ) );
+    drawCharacter( oOutVerts, vec2( w/2 + 30, h/2 + 50 ) );
+    drawCharacter( oInVerts,  vec2( w/2 + 30, h/2 + 50 ) );
+    drawCharacter( iVerts,    vec2( w/2 + 60, h/2 + 50 ) );
+    drawCharacter( dOutVerts, vec2( w/2 + 90, h/2 + 50 ) );
+    drawCharacter( dInVerts,  vec2( w/2 + 90, h/2 + 50 ) );
+    drawCharacter( sVerts,    vec2( w/2 + 120, h/2 + 50 ) );
     
 
 }
 
-function drawNumber( numVerts, positition ){
+function drawCharacter( numVerts, positition ){
     var scaleMat = mat4([4, 0, 0, 0],
                         [0, 3, 0, 0],
                         [0, 0, 1, 0],
@@ -285,10 +280,10 @@ function drawNumber( numVerts, positition ){
     // Clears our buffer bit and then sets up our roid buffer
     var numBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, numBuffer );
-    gl.useProgram( playerShaderProgram );
+    gl.useProgram( menuShaderProgram );
 
     // Sets up our shaders
-    var myPos = gl.getAttribLocation( playerShaderProgram, "myPosition" );
+    var myPos = gl.getAttribLocation( menuShaderProgram, "myPosition" );
     gl.enableVertexAttribArray( myPos );
     gl.vertexAttribPointer( myPos, 2, gl.FLOAT, false, 0, 0 );
 

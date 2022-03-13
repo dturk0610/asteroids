@@ -8,7 +8,7 @@
         <script type="text/javascript" src="player.js"></script>
         <script type="text/javascript" src="bullet.js"></script>
         <script type="text/javascript" src="game.js"></script>
-        <script type="text/javascript" src="numbers.js"></script>
+        <script type="text/javascript" src="characters.js"></script>
         <audio id="shootSound" src="../Sounds/shoot.mp3" preload="auto"></audio>
         <audio id="explodeSound" src="../Sounds/explode.mp3" preload="auto"></audio>
         <audio id="deathSound" src="../Sounds/death.mp3" preload="auto"></audio>
@@ -45,11 +45,16 @@
             }
         </script>
 
-        <script id="bloom-frag" type="x-shader/x-fragment">
-            layout (location = 0) out vec4 FragColor;
-            layout (location = 1) out vec4 BrightColor;
+        <script id="frag-menu" type="x-shader/x-fragment">
+            uniform bool clicked;
+
+            void main(){
+                if (!clicked)
+                    gl_FragColor = vec4( 1.0, 0.0, 1.0, 1.0 );
+                else
+                    gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
+            }
         </script>
-    
     </head>
 
     <body onload="init()">

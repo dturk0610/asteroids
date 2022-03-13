@@ -24,13 +24,14 @@ var divsForAsteroids = 12;  // there is no reason to decrease
                             // the number of points for smaller
                             // asteroids..
 
-
 var bulletBuffer, bulletShaderProgram;
 var bullets = [];
 var newBullLifetime = 1, bulletSpeed = 500;
 var nextBulletTime = 0, origBulletTime = .15;
 var canvas;
 
+var menuShaderProgram;
+var restartBool = false;
 var boxVerts = [];
 
 function init(){
@@ -54,6 +55,8 @@ function init(){
     // of them. The hope is to use this function to have easy
     // collision detection with the shots from them player
     canvas.addEventListener("mousedown", function(e)
+    { tryClick(canvas, e); }); 
+    canvas.addEventListener("mouseup", function(e)
     { tryRestart(canvas, e); }); 
 
     //event listener
@@ -113,7 +116,12 @@ function tryRestart(canvas, event){
     var minY = boxVerts[0][1]*3 + h*.5;
     var maxY = boxVerts[1][1]*3 + h*.5;
 
-    if (x >= minX && x <= maxX && y >= minY && y <= maxY){
+    if (x <= minX || x >= maxX || y <= minY || y >= maxY){
+        restartBool = false;
+        gl.useProgram(menuShaderProgram);
+        var clickUniform = gl.getUniformLocation( menuShaderProgram, "clicked" );
+        gl.uniform1i( clickUniform, restartBool );
+    }else if ( restartBool ) {
         restart();
     }
 }
@@ -121,7 +129,7 @@ function tryRestart(canvas, event){
 // This event function is used to test the isInside functionality
 // Hopefull this will be useful in later version, for possible 
 // collision detection.
-function tryClickAsteroid(canvas, event) {
+function tryClick(canvas, event) {
 
     // Gets the rectangle making up the canvas then calculates
     // the mouse position with the bottom left being observed
@@ -130,19 +138,35 @@ function tryClickAsteroid(canvas, event) {
     let x = event.clientX - rect.left;
     let y = rect.height - (event.clientY - rect.top);
 
-    // Now we loop through all asteroids saved and see if the
-    // clicked location is within the asteroids. There is a
-    // sort function in place that will eventually allow us
-    // to optimize the number of times this for loop is ran
-    // (possibly making a binary search functionality)
-    for (var i = 0; i < roids.length; i++){
-        if (roids[i].isInside(vec2(x,y))){
-            roids[i].destroyed = true;// A reference for how this
-                                      // function works will be
-                                      // pasted at the bottom of
-                                      // this script
-        }
-    } 
+    if ( player.lives <= 0 ){
+
+        // Now we loop through all asteroids saved and see if the
+        // clicked location is within the asteroids. There is a
+        // sort function in place that will eventually allow us
+        // to optimize the number of times this for loop is ran
+        // (possibly making a binary search functionality)
+        for (var i = 0; i < roids.length; i++){
+            if (roids[i].isInside(vec2(x,y))){
+                roids[i].destroyed = true;// A reference for how this
+                                          // function works will be
+                                          // pasted at the bottom of
+                                          // this script
+            }
+        } 
+    }
+
+    var minX = boxVerts[0][0]*4 + w*.5;
+    var maxX = boxVerts[2][0]*4 + w*.5;
+    var minY = boxVerts[0][1]*3 + h*.5;
+    var maxY = boxVerts[1][1]*3 + h*.5;
+    
+    if ( player.lives <= 0 && x >= minX && x <= maxX && y >= minY && y <= maxY){
+        restartBool = true;
+        gl.useProgram( menuShaderProgram );
+        var clickUniform = gl.getUniformLocation( menuShaderProgram, "clicked" );
+        gl.uniform1i( clickUniform, restartBool );
+    }
+
 }
 
 // #region SETUP FUNCTIONS REGION
@@ -164,6 +188,7 @@ function setupGL(){
     asteroidShaderProgram = initShaders( gl, "vertex-shader", "frag-asteroid" );
     playerShaderProgram = initShaders( gl, "vertex-shader", "frag-player" );
     bulletShaderProgram = initShaders( gl, "vertex-shader", "frag-orange" );
+    menuShaderProgram = initShaders( gl, "vertex-shader", "frag-menu" );
 
 }
 
@@ -512,35 +537,6 @@ function updatePlayer( now ){
     }
 }
 
-// Draw the Game Over screen
-function drawGameOver() {
-    drawNumber( gVerts, vec2( w/2 - 120, h/2 + 50 ) );
-    drawNumber( aOutVerts,  vec2( w/2 - 90, h/2 + 50 ) );
-    drawNumber( aInVerts,    vec2( w/2 - 90, h/2 + 50 ) );
-    drawNumber( mVerts,    vec2( w/2 - 60, h/2 + 50 ) );
-    drawNumber( eVerts,    vec2( w/2 - 30, h/2 + 50 ) );
-    // space
-    drawNumber( oOutVerts, vec2( w/2 + 30, h/2 + 50 ) );
-    drawNumber( oInVerts,  vec2( w/2 + 30, h/2 + 50 ) );
-    drawNumber( vVerts,    vec2( w/2 + 60, h/2 + 50 ) );
-    drawNumber( eVerts, vec2( w/2 + 90, h/2 + 50 ) );
-    drawNumber( rOutVerts,  vec2( w/2 + 120, h/2 + 50 ) );
-    drawNumber( rInVerts,    vec2( w/2 + 120, h/2 + 50 ) );
-
-    drawNumber( nVerts, vec2( w/2 - 120, h/2 - 14 ) );
-    drawNumber( eVerts, vec2( w/2 - 90, h/2 - 14 ) );
-    drawNumber( wVerts, vec2( w/2 - 60, h/2 - 14 ) );
-    // space
-    drawNumber( gVerts, vec2( w/2, h/2 - 14 ) );
-    drawNumber( aOutVerts, vec2( w/2 + 30, h/2 - 14 ) );
-    drawNumber( aInVerts, vec2( w/2 + 30, h/2 - 14 ) );
-    drawNumber( mVerts, vec2( w/2 + 60, h/2 - 14 ) );
-    drawNumber( eVerts, vec2( w/2 + 90, h/2 - 14 ) );
-    drawNumber( qmUpVerts, vec2( w/2 + 120, h/2 - 14 ) );
-    drawNumber( qmLowVerts, vec2( w/2 + 120, h/2 - 14 ) );
-    drawNumber( boxVerts, vec2(w/2, h/2 ) );
-}
-
 function updateBullets( now ){
     var numBull = bullets.length;
     var bulletsToDelete = [];
@@ -731,30 +727,30 @@ function drawScore(){
         switch (modVal){
             case 0:
                 // need both to draw 0
-                drawNumber(zeroOutVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
-                drawNumber(zeroInVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); 
+                drawCharacter(zeroOutVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawCharacter(zeroInVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); 
                 break;
-            case 1: drawNumber(oneVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
-            case 2: drawNumber(twoVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
-            case 3: drawNumber(threeVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
-            case 4: drawNumber(fourVerts,  vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
-            case 5: drawNumber(fiveVerts,  vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 1: drawCharacter(oneVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 2: drawCharacter(twoVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 3: drawCharacter(threeVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 4: drawCharacter(fourVerts,  vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 5: drawCharacter(fiveVerts,  vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
             case 6:
                 // both are needed to draw 6
-                drawNumber(sixOutVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
-                drawNumber(sixInVerts,     vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawCharacter(sixOutVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawCharacter(sixInVerts,     vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
                 break;
-            case 7: drawNumber(sevenVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
+            case 7: drawCharacter(sevenVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) ); break;
             case 8:
                 // all three are needed to draw 8
-                drawNumber(eightOutVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
-                drawNumber(eightTopInVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
-                drawNumber(eightBotInVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawCharacter(eightOutVerts,   vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawCharacter(eightTopInVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawCharacter(eightBotInVerts, vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
                 break;
             case 9:
                 // need both to draw 9
-                drawNumber(nineOutVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
-                drawNumber(nineInVerts,     vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawCharacter(nineOutVerts,    vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
+                drawCharacter(nineInVerts,     vec2( w - (offset + 1)*padding - xPadd, h - yPadd ) );
                 break;
             default: break;
 
@@ -765,7 +761,37 @@ function drawScore(){
     }    
 }
 
-function drawNumber( numVerts, positition ){
+// Draw the Game Over screen
+function drawGameOver() {
+
+    drawCharacter( gVerts, vec2( w/2 - 120, h/2 + 50 ) );
+    drawCharacter( aOutVerts,  vec2( w/2 - 90, h/2 + 50 ) );
+    drawCharacter( aInVerts,    vec2( w/2 - 90, h/2 + 50 ) );
+    drawCharacter( mVerts,    vec2( w/2 - 60, h/2 + 50 ) );
+    drawCharacter( eVerts,    vec2( w/2 - 30, h/2 + 50 ) );
+    // space
+    drawCharacter( oOutVerts, vec2( w/2 + 30, h/2 + 50 ) );
+    drawCharacter( oInVerts,  vec2( w/2 + 30, h/2 + 50 ) );
+    drawCharacter( vVerts,    vec2( w/2 + 60, h/2 + 50 ) );
+    drawCharacter( eVerts, vec2( w/2 + 90, h/2 + 50 ) );
+    drawCharacter( rOutVerts,  vec2( w/2 + 120, h/2 + 50 ) );
+    drawCharacter( rInVerts,    vec2( w/2 + 120, h/2 + 50 ) );
+
+    drawCharacter( nVerts, vec2( w/2 - 120, h/2 - 14 ) );
+    drawCharacter( eVerts, vec2( w/2 - 90, h/2 - 14 ) );
+    drawCharacter( wVerts, vec2( w/2 - 60, h/2 - 14 ) );
+    // space
+    drawCharacter( gVerts, vec2( w/2, h/2 - 14 ) );
+    drawCharacter( aOutVerts, vec2( w/2 + 30, h/2 - 14 ) );
+    drawCharacter( aInVerts, vec2( w/2 + 30, h/2 - 14 ) );
+    drawCharacter( mVerts, vec2( w/2 + 60, h/2 - 14 ) );
+    drawCharacter( eVerts, vec2( w/2 + 90, h/2 - 14 ) );
+    drawCharacter( qmUpVerts, vec2( w/2 + 120, h/2 - 14 ) );
+    drawCharacter( qmLowVerts, vec2( w/2 + 120, h/2 - 14 ) );
+    drawCharacter( boxVerts, vec2(w/2, h/2 ) );
+}
+
+function drawCharacter( numVerts, positition ){
     var scaleMat = mat4([4, 0, 0, 0],
                         [0, 3, 0, 0],
                         [0, 0, 1, 0],
@@ -775,7 +801,7 @@ function drawNumber( numVerts, positition ){
     // Clears our buffer bit and then sets up our roid buffer
     var numBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, numBuffer );
-    gl.useProgram( playerShaderProgram );
+    gl.useProgram( menuShaderProgram );
 
     // Sets up our shaders
     var myPos = gl.getAttribLocation( playerShaderProgram, "myPosition" );

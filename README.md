@@ -58,6 +58,33 @@ Score is shown in the top right of the web page. All numerics and phonetic chara
 
 ![score img](/Images/Score.png)
 
+### Collisions
+
+The collisions in this game, while minimal, still deserve a section dedicated to them to explain. There are thre major typs of collisions. Player on asteroid, bullet on asteroid and all on edge of the screen.
+
+#### Edge collisions
+
+The player on edge collisions and bullet on edge collisions both work identically. When the center of the object gets past the edge of the screen some math is done to determine the object is actually moving toward that side of the screen. Once this is done, the center is updated accordingly. If the center is going off to the right, the center is then moved to the left side of the screen. If the center is above the screen and is moving up, then the center is moved to the bottom of the screen. This behavior is copied for all sides of the screen.
+
+The asteroid on edge collisions work differently. If the asteroid is determined to be going off the screen, a copy of the asteroid is made on all sides of the screen necessary to make a seamless movement for the asteroid on is path of destruction for the player. After the asteroid has moved completely off the screen, it is finally destroyed. To account for problems relating to insecure destruction of asteroids, each asteroid is labeled with an id. Every time the asteroid is copied, the id is copied over as well. When the player shoots an asteroid, all asteroids with the same id are moved to the deletion list to account for these "edge asteroids"
+
+#### Bullet on Asteroid Collision
+
+Implemented early on in the design process, we added a feature to test if a point was within a convex polygon. This "isInside" was based on the work found [here](https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/). After implementing this, we can loop through all current bullets in the frame and test to see if a point on the bullet isInside the asteroid. This is done by finding the point on the bullet that is on the line that separating the asteroids center and the bullets center. Using this point, given the speed of the bullets and the time between frames, if the point is within the shape at this moment, we can assume it to have collided with the asteroid. Below is a breif visualization of this:
+
+![bullet asteroid collision bef](/Images/BeforeCollision.gif)
+No collision
+
+![bullet asteroid collision](/Images/Collision.gif)
+Collision detected
+
+![bullet asteroid collision aft](/Images/AfterCollision.gif)
+After Collision
+
+#### Player on Asteroid Collision
+
+This collision method is more complicated than the previous two. More details can be found [here](https://stackoverflow.com/questions/753140/how-do-i-determine-if-two-convex-polygons-intersect). This is done by first calculating the plane separating the player and the asteroid. After that, all points around the player and asteroid are converted to the seperating axis, and the distance axis. If there is an overlap in these values, then we can assume the player and asteroid are colliding. This does create instances where an interection may not actually be happening, but this is a rare occurence to happen.
+
 ### Sound
 
 - Shooting:
